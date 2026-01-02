@@ -1,0 +1,7 @@
+{
+  "name": "Fitness & Nutrition Assistant",
+  "description": "A Telegram WebApp to track nutrition, workouts, browse a product catalog, and manage your profile with promo codes.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
