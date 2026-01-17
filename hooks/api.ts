@@ -220,9 +220,16 @@ export const updateWorkout = (workout: Workout, tg_id: number): Promise<Workout>
 
 export const deleteWorkout = (id: string): Promise<any> => {
     if (window.confirm('Вы уверены, что хотите удалить эту тренировку?')) {
+        console.debug('deleteWorkout: calling webhook', WEBHOOKS.WORKOUTS.DELETE, { id });
         return apiRequest(WEBHOOKS.WORKOUTS.DELETE, {
             method: 'POST',
             body: JSON.stringify({ id }),
+        }).then(res => {
+            console.debug('deleteWorkout: webhook response', res);
+            return res;
+        }).catch(err => {
+            console.error('deleteWorkout: webhook error', err);
+            throw err;
         });
     }
     return Promise.resolve(null); // Возвращаем null, если пользователь отменил
