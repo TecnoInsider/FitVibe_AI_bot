@@ -66,6 +66,23 @@ interface FitVibeFormProps {
   onComplete: (profile: UserProfile) => void;
 }
 
+const hasCompletedProfile = (profile: UserProfile | null): profile is UserProfile => {
+  if (!profile || typeof profile !== "object") {
+    return false;
+  }
+
+  const candidate = profile as Partial<UserProfile>;
+  const hasTgId = typeof candidate.tg_id === "number" && Number.isFinite(candidate.tg_id);
+  const hasName = typeof candidate.name === "string" && candidate.name.trim().length > 0;
+  const hasGoal = typeof candidate.goal === "string" && candidate.goal.trim().length > 0;
+  const hasActivity =
+    typeof candidate.activity_level === "string" && candidate.activity_level.trim().length > 0;
+
+  return hasTgId && hasName && hasGoal && hasActivity;
+};
+
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -222,17 +239,28 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
         user_goal: data.goal,
       };
 
-      const responseProfile = await createProfile(payload);
-      let resolvedProfile = responseProfile;
+      const tgIdNumber = Number(telegramId);
+      if (Number.isNaN(tgIdNumber)) {
+        throw new Error("Invalid Telegram ID");
+      }
 
-      if (!resolvedProfile) {
-        const tgIdNumber = Number(telegramId);
-        if (!Number.isNaN(tgIdNumber)) {
+      const responseProfile = await createProfile(payload);
+      let resolvedProfile: UserProfile | null = responseProfile;
+
+      if (!hasCompletedProfile(resolvedProfile)) {
+        // n8n write webhook may return partial/empty object; confirm saved profile via read webhook.
+        for (let attempt = 0; attempt < 4; attempt++) {
           resolvedProfile = await getProfile(tgIdNumber);
+          if (hasCompletedProfile(resolvedProfile)) {
+            break;
+          }
+          if (attempt < 3) {
+            await delay(500 * (attempt + 1));
+          }
         }
       }
 
-      if (!resolvedProfile) {
+      if (!hasCompletedProfile(resolvedProfile)) {
         throw new Error("Empty profile response");
       }
 
