@@ -1,0 +1,6 @@
+.codex/
+dist/
+node_modules/
+fitvibe-profile-builder-main/node_modules/
+.DS_Store
+*.log
