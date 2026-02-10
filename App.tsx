@@ -18,6 +18,22 @@ import { getProfile } from './hooks/api';
 import { UserProfile } from './types';
 import DebugPanel from './components/DebugPanel';
 
+const hasCompletedProfile = (profile: UserProfile | null): profile is UserProfile => {
+  if (!profile || typeof profile !== 'object') {
+    return false;
+  }
+
+  const candidate = profile as Partial<UserProfile>;
+  const hasTgId = typeof candidate.tg_id === 'number' && Number.isFinite(candidate.tg_id);
+  const hasName = typeof candidate.name === 'string' && candidate.name.trim().length > 0;
+  const hasGoal = typeof candidate.goal === 'string' && candidate.goal.trim().length > 0;
+  const hasActivity =
+    typeof candidate.activity_level === 'string' && candidate.activity_level.trim().length > 0;
+
+  // n8n may return {"promo_codes": []} for unknown users; this should still trigger onboarding.
+  return hasTgId && hasName && hasGoal && hasActivity;
+};
+
 const AppContent: React.FC = () => {
   const { user } = useTelegram();
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -53,7 +69,7 @@ const AppContent: React.FC = () => {
     );
   }
 
-  if (!profile) {
+  if (!hasCompletedProfile(profile)) {
     return (
       <>
         <OnboardingPage onComplete={setProfile} />
