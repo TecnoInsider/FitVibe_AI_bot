@@ -83,7 +83,7 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: user?.first_name || "",
+      name: "",
       email: "",
       phone: "",
       goal: "",

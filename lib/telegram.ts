@@ -54,8 +54,8 @@ export const initTelegram = (): Promise<InitResult> => {
     if (debugConfig.isEnabled && !tg?.initDataUnsafe?.user?.id) {
       const debugUserId = debugConfig.telegramId;
       const resolvedId = debugUserId ? Number(debugUserId) : 377484655;
-      const resolvedName = debugConfig.telegramName || 'Vadim';
-      const resolvedUsername = debugConfig.telegramUsername || 'test_user';
+      const resolvedName = debugConfig.telegramName || '';
+      const resolvedUsername = debugConfig.telegramUsername || '';
       const fallbackTg = tg || {
         ready: () => {},
         expand: () => {},
@@ -82,8 +82,8 @@ export const initTelegram = (): Promise<InitResult> => {
     if (!tg) {
       const debugUserId = debugConfig.isEnabled ? debugConfig.telegramId : null;
       const resolvedId = debugUserId ? Number(debugUserId) : 377484655;
-      const resolvedName = debugConfig.telegramName || 'Vadim';
-      const resolvedUsername = debugConfig.telegramUsername || 'test_user';
+      const resolvedName = debugConfig.telegramName || '';
+      const resolvedUsername = debugConfig.telegramUsername || '';
       console.log('[Debug] No Telegram SDK -> mock mode');
       return resolve({
         tg: {
