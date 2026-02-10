@@ -6,6 +6,7 @@ import {
   User,
   Mail,
   Phone,
+  MapPin,
   Scale,
   Ruler,
   Calendar,
@@ -36,6 +37,7 @@ const STORAGE_KEY = "fitvibe_form_data";
 const formSchema = z.object({
   name: z.string().min(2, "Имя должно содержать минимум 2 символа").max(50),
   email: z.string().email("Введите корректный email"),
+  city: z.string().min(2, "Укажите город"),
   phone: z.string().optional(),
   currentWeight: z.coerce
     .number()
@@ -102,6 +104,7 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
     defaultValues: {
       name: "",
       email: "",
+      city: "",
       phone: "",
       goal: "",
       activityLevel: "",
@@ -142,7 +145,7 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
   const validateStep = async (step: number): Promise<boolean> => {
     switch (step) {
       case 1:
-        return await trigger(["name", "email"]);
+        return await trigger(["name", "email", "city"]);
       case 2:
         return await trigger([
           "currentWeight",
@@ -230,6 +233,8 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
         telegram_username: telegramUsername,
         user_name: data.name,
         email: data.email,
+        user_city: data.city.trim(),
+        user_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "",
         phone: data.phone || "",
         user_weight: data.currentWeight,
         user_weight_wanted: data.targetWeight,
@@ -390,6 +395,22 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
                 />
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="city">Город <span className="text-red-500">*</span></Label>
+              <div className="relative">
+                <Input
+                  id="city"
+                  placeholder="Москва"
+                  className="pl-10 h-12 input-focus-ring"
+                  {...register("city")}
+                />
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              </div>
+              {errors.city && (
+                <p className="text-sm text-red-500">{errors.city.message}</p>
+              )}
             </div>
           </div>
         </div>

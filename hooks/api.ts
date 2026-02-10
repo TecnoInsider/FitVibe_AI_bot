@@ -191,6 +191,8 @@ interface OnboardingPayload {
     telegram_username: string;
     user_name: string;
     email: string;
+    user_city: string;
+    user_timezone: string;
     phone: string;
     user_weight: number;
     user_weight_wanted: number;
