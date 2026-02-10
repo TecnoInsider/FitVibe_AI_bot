@@ -27,4 +27,8 @@ export const WEBHOOKS = {
   ANALYTICS: {
     GET: "https://n8n.techno-insider.com/webhook/get-nutrition-history",
   },
+  TIMEZONE: {
+    CITY: "https://n8n.techno-insider.com/webhook/get-timezone-city",
+    IP: "https://n8n.techno-insider.com/webhook/get-timezone",
+  },
 };

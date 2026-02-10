@@ -193,7 +193,6 @@ interface OnboardingPayload {
     email: string;
     user_city: string;
     user_timezone: string;
-    phone: string;
     user_weight: number;
     user_weight_wanted: number;
     user_height: number;
@@ -201,6 +200,95 @@ interface OnboardingPayload {
     user_activity: string;
     user_goal: string;
 }
+
+interface TimezoneLookupResult {
+    city?: string;
+    country?: string;
+    timezone: string;
+    utc_offset?: string;
+    formatted_utc?: string;
+}
+
+const parseTimezoneFromJson = (raw: any): TimezoneLookupResult | null => {
+    if (!raw) return null;
+    const candidate = Array.isArray(raw) ? raw[0] : raw;
+    if (!candidate || typeof candidate !== 'object') return null;
+
+    const timezone =
+        candidate.timezone ||
+        candidate.time_zone ||
+        candidate.tz ||
+        null;
+
+    if (!timezone || typeof timezone !== 'string') return null;
+
+    return {
+        city: typeof candidate.city === 'string' ? candidate.city : undefined,
+        country: typeof candidate.country === 'string' ? candidate.country : undefined,
+        timezone,
+        utc_offset: typeof candidate.utc_offset === 'string' ? candidate.utc_offset : undefined,
+        formatted_utc: typeof candidate.formatted_utc === 'string' ? candidate.formatted_utc : undefined,
+    };
+};
+
+const extractHtmlField = (html: string, label: string): string | undefined => {
+    const pattern = new RegExp(`<b>${label}:<\\/b>\\s*([^<]+)`, 'i');
+    const match = html.match(pattern);
+    const value = match?.[1]?.trim();
+    return value || undefined;
+};
+
+const parseTimezoneFromHtml = (html: string): TimezoneLookupResult | null => {
+    const timezone = extractHtmlField(html, 'Часовой пояс');
+    if (!timezone) return null;
+
+    return {
+        city: extractHtmlField(html, 'Город'),
+        country: extractHtmlField(html, 'Страна'),
+        timezone,
+        formatted_utc: extractHtmlField(html, 'Смещение'),
+    };
+};
+
+const requestTimezoneEndpoint = async (url: string): Promise<TimezoneLookupResult | null> => {
+    try {
+        const response = await fetch(url, { method: 'GET' });
+        if (!response.ok) return null;
+
+        const contentType = response.headers.get('content-type') || '';
+        const text = await response.text();
+        if (!text) return null;
+
+        if (contentType.includes('application/json')) {
+            try {
+                return parseTimezoneFromJson(JSON.parse(text));
+            } catch {
+                return null;
+            }
+        }
+
+        // Some n8n flows respond as HTML. Parse the key fields if present.
+        return parseTimezoneFromHtml(text);
+    } catch (error) {
+        console.warn('Timezone endpoint request failed:', url, error);
+        return null;
+    }
+};
+
+export const resolveTimezoneForCity = async (city: string): Promise<TimezoneLookupResult | null> => {
+    const normalizedCity = city.trim();
+    if (!normalizedCity) return null;
+
+    const cityUrl = `${WEBHOOKS.TIMEZONE.CITY}?city=${encodeURIComponent(normalizedCity)}`;
+    const cityResult = await requestTimezoneEndpoint(cityUrl);
+    if (cityResult?.timezone) return cityResult;
+
+    // Fallback: legacy IP-based webhook if city workflow is unavailable.
+    const ipResult = await requestTimezoneEndpoint(WEBHOOKS.TIMEZONE.IP);
+    if (ipResult?.timezone) return ipResult;
+
+    return null;
+};
 
 export const createProfile = (payload: OnboardingPayload): Promise<UserProfile | null> => {
     return apiRequest<UserProfile>(WEBHOOKS.PROFILE.WRITE, {

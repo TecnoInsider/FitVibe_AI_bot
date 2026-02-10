@@ -5,7 +5,6 @@ import * as z from "zod";
 import {
   User,
   Mail,
-  Phone,
   MapPin,
   Scale,
   Ruler,
@@ -28,7 +27,7 @@ import {
 import { Progress } from "./ui/progress";
 import { useAppContext } from "../contexts/AppContext";
 import { useTelegram } from "../contexts/TelegramContext";
-import { createProfile, getProfile } from "../hooks/api";
+import { createProfile, getProfile, resolveTimezoneForCity } from "../hooks/api";
 import { getDebugConfig } from "../lib/debug";
 import { UserProfile } from "../types";
 
@@ -38,7 +37,6 @@ const formSchema = z.object({
   name: z.string().min(2, "Имя должно содержать минимум 2 символа").max(50),
   email: z.string().email("Введите корректный email"),
   city: z.string().min(2, "Укажите город"),
-  phone: z.string().optional(),
   currentWeight: z.coerce
     .number()
     .min(30, "Минимум 30 кг")
@@ -105,7 +103,6 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
       name: "",
       email: "",
       city: "",
-      phone: "",
       goal: "",
       activityLevel: "",
     },
@@ -227,15 +224,26 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
         return;
       }
 
+      const cityInput = data.city.trim();
+      let resolvedCity = cityInput;
+      let resolvedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+
+      const timezoneResult = await resolveTimezoneForCity(cityInput);
+      if (timezoneResult?.timezone) {
+        resolvedTimezone = timezoneResult.timezone;
+        if (timezoneResult.city) {
+          resolvedCity = timezoneResult.city;
+        }
+      }
+
       const payload = {
         chat_id: telegramId,
         telegram_id: telegramId,
         telegram_username: telegramUsername,
         user_name: data.name,
         email: data.email,
-        user_city: data.city.trim(),
-        user_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "",
-        phone: data.phone || "",
+        user_city: resolvedCity,
+        user_timezone: resolvedTimezone,
         user_weight: data.currentWeight,
         user_weight_wanted: data.targetWeight,
         user_height: data.height,
@@ -384,20 +392,6 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="phone">Номер телефона</Label>
-              <div className="relative">
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="+7 (999) 123-45-67"
-                  className="pl-10 h-12 input-focus-ring"
-                  {...register("phone")}
-                />
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              </div>
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="city">Город <span className="text-red-500">*</span></Label>
               <div className="relative">
                 <Input
@@ -408,6 +402,9 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
                 />
                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               </div>
+              <p className="text-xs text-slate-500">
+                Нужен для определения часового пояса и отправки напоминаний в подходящее время.
+              </p>
               {errors.city && (
                 <p className="text-sm text-red-500">{errors.city.message}</p>
               )}
