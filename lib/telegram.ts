@@ -1,5 +1,7 @@
 // lib/telegram.ts — гибридная инициализация + диагностика (исправлено)
 
+import { getDebugConfig } from './debug';
+
 declare global {
   interface Window { Telegram: any; }
 }
@@ -46,10 +48,42 @@ export const initTelegram = (): Promise<InitResult> => {
     }
 
     const tg = window.Telegram?.WebApp;
+    const debugConfig = getDebugConfig();
     console.log('[Debug] init start', diagSnapshot(tg));
+
+    if (debugConfig.isEnabled && !tg?.initDataUnsafe?.user?.id) {
+      const debugUserId = debugConfig.telegramId;
+      const resolvedId = debugUserId ? Number(debugUserId) : 377484655;
+      const resolvedName = debugConfig.telegramName || '';
+      const resolvedUsername = debugConfig.telegramUsername || '';
+      const fallbackTg = tg || {
+        ready: () => {},
+        expand: () => {},
+        HapticFeedback: {
+          impactOccurred: (style: string) => console.log(`Haptic impact: ${style}`),
+          notificationOccurred: (type: string) => console.log(`Haptic notification: ${type}`),
+        },
+        openLink: (url: string) => window.open(url, '_blank'),
+        platform: getPlatform(),
+      };
+
+      console.log('[Debug] Debug mode active -> mock user');
+      return resolve({
+        tg: fallbackTg,
+        user: {
+          id: resolvedId,
+          first_name: resolvedName,
+          username: resolvedUsername,
+        },
+      });
+    }
 
     // ✅ Если Telegram SDK недоступен — это действительно браузер (dev)
     if (!tg) {
+      const debugUserId = debugConfig.isEnabled ? debugConfig.telegramId : null;
+      const resolvedId = debugUserId ? Number(debugUserId) : 377484655;
+      const resolvedName = debugConfig.telegramName || '';
+      const resolvedUsername = debugConfig.telegramUsername || '';
       console.log('[Debug] No Telegram SDK -> mock mode');
       return resolve({
         tg: {
@@ -63,9 +97,9 @@ export const initTelegram = (): Promise<InitResult> => {
           platform: getPlatform(),
         },
         user: {
-          id: 377484655,
-          first_name: 'Vadim',
-          username: 'test_user',
+          id: resolvedId,
+          first_name: resolvedName,
+          username: resolvedUsername,
         },
       });
     }

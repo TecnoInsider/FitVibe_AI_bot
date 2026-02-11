@@ -3,6 +3,7 @@ export const WEBHOOKS = {
   PROFILE: {
     GET: "https://n8n.techno-insider.com/webhook/get-profile",
     UPDATE: "https://n8n.techno-insider.com/webhook/update-profile",
+    WRITE: "https://n8n.techno-insider.com/webhook/user_profile_write",
     UPLOAD_AVATAR: "https://n8n.techno-insider.com/webhook/upload-avatar",
   },
   NUTRITION: {
@@ -25,5 +26,9 @@ export const WEBHOOKS = {
   },
   ANALYTICS: {
     GET: "https://n8n.techno-insider.com/webhook/get-nutrition-history",
+  },
+  TIMEZONE: {
+    CITY: "https://n8n.techno-insider.com/webhook/get-timezone-city",
+    IP: "https://n8n.techno-insider.com/webhook/get-timezone",
   },
 };
