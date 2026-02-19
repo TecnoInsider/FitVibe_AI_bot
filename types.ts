@@ -13,6 +13,7 @@ export interface UserProfile {
   email?: string;
   city?: string;
   timezone?: string | null;
+  gender?: 'male' | 'female' | null;
   age: number;
   height: number;
   weight: number;
@@ -21,6 +22,10 @@ export interface UserProfile {
   access_status?: 'demo' | 'paid' | 'blocked' | 'free' | string;
   access_until?: string | null;
   demo_ends_at?: string | null;
+  auto_renew?: boolean | null;
+  next_charge_at?: string | null;
+  contract_id?: string | null;
+  subscription_contract_id?: string | null;
   onboarding_completed?: boolean;
   promo_codes: PromoCode[];
 }

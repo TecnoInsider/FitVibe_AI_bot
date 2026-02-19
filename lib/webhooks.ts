@@ -34,5 +34,6 @@ export const WEBHOOKS = {
   PAYMENTS: {
     PRICING: "https://n8n.techno-insider.com/webhook/payments/lava/prices",
     CREATE: "https://n8n.techno-insider.com/webhook/payments/lava/create",
+    CANCEL: "https://n8n.techno-insider.com/webhook/payments/lava/cancel",
   },
 };
