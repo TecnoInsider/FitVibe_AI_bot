@@ -1,0 +1,516 @@
+{
+  "name": "FitVibe - payments/lava/cancel",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "payments/lava/cancel",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "Webhook_Cancel",
+      "name": "Webhook: payments/lava/cancel",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = $json.body ?? $json;\nconst tgId = Number(b.tg_id);\nconst email = typeof b.email === 'string' ? b.email.trim() : null;\nconst contractId = typeof b.contract_id === 'string' ? b.contract_id.trim() : null;\n\nreturn [{ json: { tg_id: Number.isFinite(tgId) ? tgId : null, email, contract_id: contractId, validation_error: !Number.isFinite(tgId) && !email && !contractId } }];"
+      },
+      "id": "Code_Validate",
+      "name": "Code: validate input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "v1",
+              "leftValue": "={{$json.validation_error}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "IF_Invalid",
+      "name": "IF: invalid input",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        700,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: false, status: 'error', message: 'Передайте tg_id, email или contract_id' } }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "Respond_Invalid",
+      "name": "Respond: invalid",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        940,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT tg_id, email, access_until, auto_renew, subscription_contract_id, contract_id FROM user_profiles WHERE ({{ $json.tg_id || -1 }} > 0 AND tg_id = {{ $json.tg_id || -1 }}) OR ({{ $json.email ? '\"1\"' : 'NULL' }} IS NOT NULL AND email = '{{ $json.email || '' }}') OR ({{ $json.contract_id ? '\"1\"' : 'NULL' }} IS NOT NULL AND (subscription_contract_id = '{{ $json.contract_id || '' }}' OR contract_id = '{{ $json.contract_id || '' }}')) ORDER BY updated_at DESC LIMIT 1;",
+        "options": {}
+      },
+      "id": "PG_FindProfile",
+      "name": "Postgres: find profile",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        940,
+        420
+      ],
+      "credentials": {
+        "postgres": {
+          "name": "FitVibe Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $json;\nif (!row || Object.keys(row).length === 0) {\n  return [{ json: { error: true, statusCode: 404, message: 'Подписка не найдена' } }];\n}\nconst contract_id = row.subscription_contract_id || row.contract_id || null;\nif (!contract_id) {\n  return [{ json: { error: true, statusCode: 422, message: 'Не найден contract_id для отмены' } }];\n}\nreturn [{ json: { tg_id: row.tg_id, email: row.email || null, access_until: row.access_until || null, contract_id, lavaCancelUrl: $env.LAVA_CANCEL_SUBSCRIPTION_URL } }];"
+      },
+      "id": "Code_Prepare",
+      "name": "Code: prepare cancel",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1180,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "v2",
+              "leftValue": "={{$json.error}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "IF_PrepareError",
+      "name": "IF: prepare error",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1420,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: false, status: 'error', message: $json.message } }}",
+        "options": {
+          "responseCode": "={{$json.statusCode || 422}}"
+        }
+      },
+      "id": "Respond_PrepareError",
+      "name": "Respond: prepare error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1660,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$json.lavaCancelUrl}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Api-Key",
+              "value": "={{$env.LAVA_API_KEY}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { contract_id: $json.contract_id } }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "HTTP_LavaCancel",
+      "name": "HTTP: Lava cancel",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1660,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const req = $('Code: prepare cancel').first().json;\nconst code = $json.statusCode || 500;\nconst body = $json.body || {};\nconst success = code >= 200 && code < 300 && body.success !== false;\nconst accessText = req.access_until ? new Date(req.access_until).toLocaleString('ru-RU', { hour12: false }) : 'конца текущего оплаченного периода';\nreturn [{ json: { ...req, success, status: success ? 'cancelled' : 'error', message: success ? `Автопродление отключено. Доступ сохранится до ${accessText}.` : (body.message || 'Не удалось отключить автопродление') } }];"
+      },
+      "id": "Code_Normalize",
+      "name": "Code: normalize",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1900,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "v3",
+              "leftValue": "={{$json.success}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "IF_Success",
+      "name": "IF: success",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2140,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE user_profiles SET auto_renew = false, subscription_cancelled_at = NOW(), subscription_cancel_source = 'user', subscription_cancel_reason = 'user_request', updated_at = NOW() WHERE tg_id = {{ $json.tg_id }};",
+        "options": {}
+      },
+      "id": "PG_UpdateUser",
+      "name": "Postgres: disable auto_renew",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2380,
+        460
+      ],
+      "credentials": {
+        "postgres": {
+          "name": "FitVibe Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO subscription_events (tg_id, contract_id, event_type, status, provider_payload, created_at) VALUES ({{ $json.tg_id }}, '{{ $json.contract_id }}', 'subscription.cancelled_by_user', 'success', '{}'::jsonb, NOW());",
+        "options": {}
+      },
+      "id": "PG_EventSuccess",
+      "name": "Postgres: event success",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2620,
+        460
+      ],
+      "credentials": {
+        "postgres": {
+          "name": "FitVibe Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, status: $json.status, message: $json.message, access_until: $json.access_until, auto_renew: false } }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "Respond_Success",
+      "name": "Respond: success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2860,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO subscription_events (tg_id, contract_id, event_type, status, provider_payload, created_at) VALUES ({{ $json.tg_id }}, '{{ $json.contract_id }}', 'subscription.cancel_failed', 'error', '{}'::jsonb, NOW());",
+        "options": {}
+      },
+      "id": "PG_EventError",
+      "name": "Postgres: event error",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2380,
+        700
+      ],
+      "credentials": {
+        "postgres": {
+          "name": "FitVibe Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: false, status: 'error', message: $json.message || 'Не удалось отключить автопродление' } }}",
+        "options": {
+          "responseCode": 502
+        }
+      },
+      "id": "Respond_Error",
+      "name": "Respond: error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2620,
+        700
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook: payments/lava/cancel": {
+      "main": [
+        [
+          {
+            "node": "Code: validate input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: validate input": {
+      "main": [
+        [
+          {
+            "node": "IF: invalid input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: invalid input": {
+      "main": [
+        [
+          {
+            "node": "Respond: invalid",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Postgres: find profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres: find profile": {
+      "main": [
+        [
+          {
+            "node": "Code: prepare cancel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: prepare cancel": {
+      "main": [
+        [
+          {
+            "node": "IF: prepare error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: prepare error": {
+      "main": [
+        [
+          {
+            "node": "Respond: prepare error",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP: Lava cancel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: Lava cancel": {
+      "main": [
+        [
+          {
+            "node": "Code: normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: normalize": {
+      "main": [
+        [
+          {
+            "node": "IF: success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: success": {
+      "main": [
+        [
+          {
+            "node": "Postgres: disable auto_renew",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Postgres: event error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres: disable auto_renew": {
+      "main": [
+        [
+          {
+            "node": "Postgres: event success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres: event success": {
+      "main": [
+        [
+          {
+            "node": "Respond: success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres: event error": {
+      "main": [
+        [
+          {
+            "node": "Respond: error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": [
+    "fitvibe",
+    "payments",
+    "lava",
+    "subscription"
+  ]
+}

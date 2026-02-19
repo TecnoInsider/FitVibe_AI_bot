@@ -27,9 +27,16 @@ import {
 import { Progress } from "./ui/progress";
 import { useAppContext } from "../contexts/AppContext";
 import { useTelegram } from "../contexts/TelegramContext";
-import { createProfile, getProfile, resolveTimezoneForCity } from "../hooks/api";
+import {
+  createProfile,
+  getNutritionPageData,
+  getProfile,
+  resolveTimezoneForCity,
+  updateNutritionGoals,
+} from "../hooks/api";
 import { getDebugConfig } from "../lib/debug";
-import { UserProfile } from "../types";
+import { NutritionStats, UserProfile } from "../types";
+import { calculateAutoNutritionGoals, hasAnyNutritionGoals } from "../lib/nutrition-goals";
 
 const STORAGE_KEY = "fitvibe_form_data";
 
@@ -50,6 +57,10 @@ const formSchema = z.object({
     .min(100, "Минимум 100 см")
     .max(250, "Максимум 250 см"),
   age: z.coerce.number().min(14, "Минимум 14 лет").max(120, "Максимум 120 лет"),
+  gender: z.enum(["male", "female"], {
+    required_error: "Выберите пол",
+    invalid_type_error: "Выберите пол",
+  }),
   goal: z.string().min(1, "Выберите цель"),
   activityLevel: z.string().min(1, "Выберите уровень активности"),
 });
@@ -96,6 +107,7 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
     setValue,
     watch,
     trigger,
+    clearErrors,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -103,6 +115,7 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
       name: "",
       email: "",
       city: "",
+      gender: undefined,
       goal: "",
       activityLevel: "",
     },
@@ -115,6 +128,15 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
 
   const buildStorageKey = (id?: number | null) =>
     id ? `${STORAGE_KEY}_${id}` : STORAGE_KEY;
+
+  const isFieldFilled = (value: unknown): boolean => {
+    if (typeof value === "string") return value.trim().length > 0;
+    if (typeof value === "number") return Number.isFinite(value) && value > 0;
+    return value === "male" || value === "female";
+  };
+
+  const requiredMarkClass = (value: unknown) =>
+    isFieldFilled(value) ? "text-slate-900" : "text-red-500";
 
   useEffect(() => {
     const storageKey = buildStorageKey(user?.id || null);
@@ -149,6 +171,7 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
           "targetWeight",
           "height",
           "age",
+          "gender",
         ]);
       case 3:
         return await trigger(["goal", "activityLevel"]);
@@ -213,6 +236,40 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
     return { telegramId, telegramUsername, tgUser };
   };
 
+  const initializeNutritionGoals = async (tgId: number, data: FormData) => {
+    let existingPageData: { stats: NutritionStats } | null = null;
+    try {
+      const loaded = await getNutritionPageData(tgId);
+      existingPageData = loaded && loaded.stats ? { stats: loaded.stats } : null;
+    } catch (error) {
+      console.warn("Failed to load existing nutrition goals, continuing with auto-init", error);
+    }
+
+    if (hasAnyNutritionGoals(existingPageData?.stats)) {
+      return;
+    }
+
+    const calculated = calculateAutoNutritionGoals({
+      currentWeight: data.currentWeight,
+      targetWeight: data.targetWeight,
+      height: data.height,
+      age: data.age,
+      activityLevel: data.activityLevel,
+      goal: data.goal,
+      gender: data.gender,
+    });
+
+    const goalsPayload: NutritionStats = {
+      consumedKcal: existingPageData?.stats?.consumedKcal ?? 0,
+      consumedProtein: existingPageData?.stats?.consumedProtein ?? 0,
+      consumedCarbs: existingPageData?.stats?.consumedCarbs ?? 0,
+      consumedFat: existingPageData?.stats?.consumedFat ?? 0,
+      ...calculated,
+    };
+
+    await updateNutritionGoals(goalsPayload, tgId);
+  };
+
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
 
@@ -248,6 +305,7 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
         user_weight_wanted: data.targetWeight,
         user_height: data.height,
         user_age: data.age,
+        user_gender: data.gender,
         user_activity: data.activityLevel,
         user_goal: data.goal,
       };
@@ -275,6 +333,13 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
 
       if (!hasCompletedProfile(resolvedProfile)) {
         throw new Error("Empty profile response");
+      }
+
+      try {
+        await initializeNutritionGoals(tgIdNumber, data);
+      } catch (goalsError) {
+        console.error("Failed to initialize nutrition goals", goalsError);
+        showToast("Профиль сохранен, но автоцели не рассчитались. Можно задать вручную в Питании.");
       }
 
       const storageKey = buildStorageKey(user?.id || tgUser?.id || null);
@@ -359,7 +424,7 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Имя <span className="text-red-500">*</span></Label>
+              <Label htmlFor="name">Имя <span className={requiredMarkClass(formValues.name)}>*</span></Label>
               <div className="relative">
                 <Input
                   id="name"
@@ -375,7 +440,7 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
+              <Label htmlFor="email">Email <span className={requiredMarkClass(formValues.email)}>*</span></Label>
               <div className="relative">
                 <Input
                   id="email"
@@ -392,11 +457,11 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="city">Город <span className="text-red-500">*</span></Label>
+              <Label htmlFor="city">Город <span className={requiredMarkClass(formValues.city)}>*</span></Label>
               <div className="relative">
                 <Input
                   id="city"
-                  placeholder="Москва"
+                  placeholder="Одесса"
                   className="pl-10 h-12 input-focus-ring"
                   {...register("city")}
                 />
@@ -427,7 +492,7 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="currentWeight">Текущий вес (кг) <span className="text-red-500">*</span></Label>
+              <Label htmlFor="currentWeight">Текущий вес (кг) <span className={requiredMarkClass(formValues.currentWeight)}>*</span></Label>
               <div className="relative">
                 <Input
                   id="currentWeight"
@@ -444,7 +509,7 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="targetWeight">Желаемый вес (кг) <span className="text-red-500">*</span></Label>
+              <Label htmlFor="targetWeight">Желаемый вес (кг) <span className={requiredMarkClass(formValues.targetWeight)}>*</span></Label>
               <div className="relative">
                 <Input
                   id="targetWeight"
@@ -461,7 +526,7 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="height">Рост (см) <span className="text-red-500">*</span></Label>
+              <Label htmlFor="height">Рост (см) <span className={requiredMarkClass(formValues.height)}>*</span></Label>
               <div className="relative">
                 <Input
                   id="height"
@@ -478,7 +543,7 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="age">Возраст (лет) <span className="text-red-500">*</span></Label>
+              <Label htmlFor="age">Возраст (лет) <span className={requiredMarkClass(formValues.age)}>*</span></Label>
               <div className="relative">
                 <Input
                   id="age"
@@ -491,6 +556,41 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
               </div>
               {errors.age && (
                 <p className="text-sm text-red-500">{errors.age.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2 col-span-2">
+              <Label>Пол <span className={requiredMarkClass(formValues.gender)}>*</span></Label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setValue("gender", "male", { shouldDirty: true, shouldValidate: true })
+                  }
+                  className={`h-12 rounded-xl border text-base font-semibold transition-colors ${
+                    formValues.gender === "male"
+                      ? "bg-sky-500 border-sky-500 text-white"
+                      : "bg-white border-slate-200 text-slate-700 hover:border-slate-300"
+                  }`}
+                >
+                  Мужчина
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setValue("gender", "female", { shouldDirty: true, shouldValidate: true })
+                  }
+                  className={`h-12 rounded-xl border text-base font-semibold transition-colors ${
+                    formValues.gender === "female"
+                      ? "bg-sky-500 border-sky-500 text-white"
+                      : "bg-white border-slate-200 text-slate-700 hover:border-slate-300"
+                  }`}
+                >
+                  Женщина
+                </button>
+              </div>
+              {errors.gender && (
+                <p className="text-sm text-red-500">{errors.gender.message}</p>
               )}
             </div>
           </div>
@@ -511,10 +611,13 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Цель <span className="text-red-500">*</span></Label>
+              <Label>Цель <span className={requiredMarkClass(formValues.goal)}>*</span></Label>
               <Select
                 value={formValues.goal}
-                onValueChange={(value) => setValue("goal", value)}
+                onValueChange={(value) => {
+                  setValue("goal", value, { shouldDirty: true, shouldValidate: true });
+                  clearErrors("goal");
+                }}
               >
                 <SelectTrigger className="h-12 input-focus-ring">
                   <SelectValue placeholder="Выбери свою цель" />
@@ -531,10 +634,13 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
             </div>
 
             <div className="space-y-2">
-              <Label>Уровень физической активности <span className="text-red-500">*</span></Label>
+              <Label>Уровень физической активности <span className={requiredMarkClass(formValues.activityLevel)}>*</span></Label>
               <Select
                 value={formValues.activityLevel}
-                onValueChange={(value) => setValue("activityLevel", value)}
+                onValueChange={(value) => {
+                  setValue("activityLevel", value, { shouldDirty: true, shouldValidate: true });
+                  clearErrors("activityLevel");
+                }}
               >
                 <SelectTrigger className="h-12 input-focus-ring">
                   <SelectValue placeholder="Выбери уровень активности" />

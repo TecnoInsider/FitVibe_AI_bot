@@ -7,6 +7,7 @@ import { getProfile, updateProfile, uploadAvatar } from '../hooks/api';
 import { useTelegram } from '../contexts/TelegramContext';
 import EditProfileModal from '../components/EditProfileModal';
 import { useAppContext } from '../contexts/AppContext';
+import { formatDateTimeForUser, resolveTimezone } from '../lib/datetime';
 
 const ProfileInfoCard: React.FC<{ icon: React.ReactNode; value: string | number; label: string }> = ({ icon, value, label }) => (
     <div className="bg-white p-4 rounded-2xl shadow-sm text-center flex flex-col items-center justify-center h-36">
@@ -141,9 +142,9 @@ const ProfilePage: React.FC = () => {
   const displayName = profile?.name || user?.first_name || 'Пользователь';
   const accessStatus = profile?.access_status || 'demo';
   const untilDateRaw = profile?.access_until || profile?.demo_ends_at;
-  const untilText = untilDateRaw
-    ? new Date(untilDateRaw).toLocaleString('ru-RU', { hour12: false })
-    : 'не задано';
+  const userTimezone = resolveTimezone(profile?.timezone);
+  const untilText = formatDateTimeForUser(untilDateRaw, userTimezone);
+  const untilLabel = userTimezone ? `Доступ до (${userTimezone})` : 'Доступ до';
   const statusText =
     accessStatus === 'paid'
       ? 'Подписка активна'
@@ -152,6 +153,7 @@ const ProfilePage: React.FC = () => {
         : 'Демо-режим';
   const billingButtonText =
     accessStatus === 'paid' ? 'Управление подпиской' : 'Оформить доступ';
+  const billingTarget = accessStatus === 'paid' ? '/billing?mode=manage' : '/billing';
 
   return (
     <div className="p-4">
@@ -209,10 +211,10 @@ const ProfilePage: React.FC = () => {
         <section className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 mb-6">
           <h3 className="text-lg font-bold text-slate-900 mb-1">Подписка</h3>
           <p className="text-sm text-slate-600 mb-1">Статус: <span className="font-semibold">{statusText}</span></p>
-          <p className="text-sm text-slate-600 mb-4">Доступ до: <span className="font-semibold">{untilText}</span></p>
+          <p className="text-sm text-slate-600 mb-4">{untilLabel}: <span className="font-semibold">{untilText}</span></p>
           <button
             type="button"
-            onClick={() => navigate('/billing')}
+            onClick={() => navigate(billingTarget)}
             className="w-full py-3 rounded-xl bg-sky-500 text-white font-semibold hover:bg-sky-600 transition-colors"
           >
             {billingButtonText}

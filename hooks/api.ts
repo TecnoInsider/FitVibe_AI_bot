@@ -197,6 +197,7 @@ interface OnboardingPayload {
     user_weight_wanted: number;
     user_height: number;
     user_age: number;
+    user_gender: 'male' | 'female';
     user_activity: string;
     user_goal: string;
 }
@@ -443,6 +444,12 @@ interface CreatePaymentPayload {
     return_url?: string;
 }
 
+interface CancelSubscriptionPayload {
+    tg_id: number;
+    email?: string;
+    contract_id?: string;
+}
+
 const normalizeMethod = (value: unknown): PaymentMethod | null => {
     const raw = String(value ?? '').toLowerCase().trim();
     if (['ru', 'rf', 'bank_rf', 'russian_bank', 'local'].includes(raw)) return 'ru';
@@ -541,4 +548,30 @@ export const createLavaPayment = async (payload: CreatePaymentPayload): Promise<
     if (typeof raw.checkout_url === 'string' && raw.checkout_url) return raw.checkout_url;
     if (typeof raw.url === 'string' && raw.url) return raw.url;
     return null;
+};
+
+export const cancelLavaSubscription = async (payload: CancelSubscriptionPayload): Promise<boolean> => {
+    const raw = await apiRequest<any>(WEBHOOKS.PAYMENTS.CANCEL, {
+        method: 'POST',
+        body: JSON.stringify({
+            tg_id: payload.tg_id,
+            email: payload.email,
+            contract_id: payload.contract_id,
+        }),
+    });
+
+    if (!raw) return false;
+    if (typeof raw.success === 'boolean') return raw.success;
+
+    const status =
+        (typeof raw.status === 'string' && raw.status) ||
+        (typeof raw.subscription_status === 'string' && raw.subscription_status) ||
+        (typeof raw.result === 'string' && raw.result) ||
+        (typeof raw.message === 'string' && raw.message) ||
+        '';
+
+    const normalized = status.toLowerCase();
+    if (['ok', 'success', 'cancelled', 'canceled', 'inactive'].includes(normalized)) return true;
+
+    return false;
 };
