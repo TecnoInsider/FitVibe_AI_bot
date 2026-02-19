@@ -31,4 +31,8 @@ export const WEBHOOKS = {
     CITY: "https://n8n.techno-insider.com/webhook/get-timezone-city",
     IP: "https://n8n.techno-insider.com/webhook/get-timezone",
   },
+  PAYMENTS: {
+    PRICING: "https://n8n.techno-insider.com/webhook/payments/lava/prices",
+    CREATE: "https://n8n.techno-insider.com/webhook/payments/lava/create",
+  },
 };

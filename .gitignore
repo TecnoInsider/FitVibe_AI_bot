@@ -2,5 +2,6 @@
 dist/
 node_modules/
 fitvibe-profile-builder-main/node_modules/
+_tmp_reference/
 .DS_Store
 *.log

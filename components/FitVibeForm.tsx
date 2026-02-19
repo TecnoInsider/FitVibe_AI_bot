@@ -595,7 +595,7 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
                 Сохраняем...
               </span>
             ) : (
-              "Активировать персональный режим"
+              "Активировать доступ"
             )}
           </Button>
         )}

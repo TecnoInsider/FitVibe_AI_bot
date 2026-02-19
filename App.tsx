@@ -10,6 +10,7 @@ import CatalogPage from './pages/CatalogPage';
 import ProfilePage from './pages/ProfilePage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import PromoCodesPage from './pages/PromoCodesPage';
+import BillingPage from './pages/BillingPage';
 import { AppProvider } from './contexts/AppContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import OnboardingPage from './pages/OnboardingPage';
@@ -91,6 +92,7 @@ const AppContent: React.FC = () => {
                 <Route path="/catalog" element={<CatalogPage />} />
                 <Route path="/catalog/:id" element={<ProductDetailPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/billing" element={<BillingPage />} />
                 <Route path="/profile/promocodes" element={<PromoCodesPage />} />
                 {/* Любой неизвестный путь → Профиль */}
                 <Route path="*" element={<Navigate to="/profile" replace />} />
