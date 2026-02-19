@@ -6,14 +6,22 @@ export interface PromoCode {
 }
 
 export interface UserProfile {
+  internal_id?: string;
   tg_id: number;
   name: string;
   avatar_url?: string;
+  email?: string;
+  city?: string;
+  timezone?: string | null;
   age: number;
   height: number;
   weight: number;
   activity_level: string;
   goal: string;
+  access_status?: 'demo' | 'paid' | 'blocked' | 'free' | string;
+  access_until?: string | null;
+  demo_ends_at?: string | null;
+  onboarding_completed?: boolean;
   promo_codes: PromoCode[];
 }
 

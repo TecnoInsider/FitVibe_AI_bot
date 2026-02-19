@@ -422,3 +422,123 @@ export const uploadAvatar = async (file: File, tg_id: number): Promise<{ avatar_
         throw error;
     }
 };
+
+export type PaymentMethod = 'ru' | 'foreign';
+export type PaymentCurrency = 'RUB' | 'USD' | 'EUR';
+
+export interface PaymentPricingItem {
+    method: PaymentMethod;
+    currency: PaymentCurrency;
+    period_months: 1 | 3 | 6 | 12;
+    amount: number;
+}
+
+interface CreatePaymentPayload {
+    telegram_id: number;
+    internal_id?: string;
+    email?: string;
+    plan_months: 1 | 3 | 6 | 12;
+    currency: PaymentCurrency;
+    ui_method: 'bank_ru' | 'bank_foreign';
+    return_url?: string;
+}
+
+const normalizeMethod = (value: unknown): PaymentMethod | null => {
+    const raw = String(value ?? '').toLowerCase().trim();
+    if (['ru', 'rf', 'bank_rf', 'russian_bank', 'local'].includes(raw)) return 'ru';
+    if (['foreign', 'int', 'international', 'foreign_bank'].includes(raw)) return 'foreign';
+    return null;
+};
+
+const normalizeCurrency = (value: unknown): PaymentCurrency | null => {
+    const raw = String(value ?? '').toUpperCase().trim();
+    if (raw === 'RUB' || raw === 'USD' || raw === 'EUR') return raw;
+    return null;
+};
+
+const normalizePeriod = (value: unknown): 1 | 3 | 6 | 12 | null => {
+    const num = Number(value);
+    if (num === 1 || num === 3 || num === 6 || num === 12) return num;
+    return null;
+};
+
+const normalizePricingArray = (items: any[]): PaymentPricingItem[] => {
+    return items
+        .map((item) => {
+            const method = normalizeMethod(item.method ?? item.payment_method ?? item.bank_type);
+            const currency = normalizeCurrency(item.currency);
+            const period = normalizePeriod(item.period_months ?? item.months ?? item.period ?? item.plan_months);
+            const amount = Number(item.amount ?? item.price ?? item.total ?? 0);
+            if (!method || !currency || !period || !Number.isFinite(amount) || amount <= 0) return null;
+            return { method, currency, period_months: period, amount };
+        })
+        .filter((item): item is PaymentPricingItem => item !== null);
+};
+
+const parsePricingResponse = (raw: any): PaymentPricingItem[] => {
+    if (!raw) return [];
+
+    if (Array.isArray(raw)) {
+        return normalizePricingArray(raw);
+    }
+
+    if (Array.isArray(raw.items)) {
+        return normalizePricingArray(raw.items);
+    }
+
+    if (Array.isArray(raw.options)) {
+        return normalizePricingArray(raw.options);
+    }
+
+    if (raw.prices && typeof raw.prices === 'object') {
+        const rows: any[] = [];
+        Object.entries(raw.prices).forEach(([methodKey, currencyMap]) => {
+            if (!currencyMap || typeof currencyMap !== 'object') return;
+            Object.entries(currencyMap as Record<string, unknown>).forEach(([currencyKey, periodMap]) => {
+                if (!periodMap || typeof periodMap !== 'object') return;
+                Object.entries(periodMap as Record<string, unknown>).forEach(([periodKey, amount]) => {
+                    rows.push({
+                        method: methodKey,
+                        currency: currencyKey,
+                        period_months: Number(periodKey),
+                        amount,
+                    });
+                });
+            });
+        });
+        return normalizePricingArray(rows);
+    }
+
+    return [];
+};
+
+export const getLavaPricing = async (tg_id: number, email?: string): Promise<PaymentPricingItem[]> => {
+    const raw = await apiRequest<any>(WEBHOOKS.PAYMENTS.PRICING, {
+        method: 'POST',
+        body: JSON.stringify({ tg_id, email }),
+    });
+    return parsePricingResponse(raw);
+};
+
+export const createLavaPayment = async (payload: CreatePaymentPayload): Promise<string | null> => {
+    // Единый контракт с текущим n8n webhook payments/lava/create.
+    const requestPayload = {
+        telegram_id: payload.telegram_id,
+        internal_id: payload.internal_id,
+        email: payload.email,
+        plan_months: payload.plan_months,
+        currency: payload.currency,
+        ui_method: payload.ui_method,
+    };
+
+    const raw = await apiRequest<any>(WEBHOOKS.PAYMENTS.CREATE, {
+        method: 'POST',
+        body: JSON.stringify(requestPayload),
+    });
+
+    if (!raw) return null;
+    if (typeof raw.payment_url === 'string' && raw.payment_url) return raw.payment_url;
+    if (typeof raw.checkout_url === 'string' && raw.checkout_url) return raw.checkout_url;
+    if (typeof raw.url === 'string' && raw.url) return raw.url;
+    return null;
+};

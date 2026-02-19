@@ -139,6 +139,19 @@ const ProfilePage: React.FC = () => {
   }
 
   const displayName = profile?.name || user?.first_name || 'Пользователь';
+  const accessStatus = profile?.access_status || 'demo';
+  const untilDateRaw = profile?.access_until || profile?.demo_ends_at;
+  const untilText = untilDateRaw
+    ? new Date(untilDateRaw).toLocaleString('ru-RU', { hour12: false })
+    : 'не задано';
+  const statusText =
+    accessStatus === 'paid'
+      ? 'Подписка активна'
+      : accessStatus === 'blocked'
+        ? 'Доступ ограничен'
+        : 'Демо-режим';
+  const billingButtonText =
+    accessStatus === 'paid' ? 'Управление подпиской' : 'Оформить доступ';
 
   return (
     <div className="p-4">
@@ -192,6 +205,19 @@ const ProfilePage: React.FC = () => {
             <ProfileInfoCard icon={<TrendingUp size={24} />} value={profile?.activity_level || '—'} label="Активность" />
             <ProfileInfoCard icon={<Target size={24} />} value={profile?.goal || '—'} label="Цель" />
         </div>
+
+        <section className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 mb-6">
+          <h3 className="text-lg font-bold text-slate-900 mb-1">Подписка</h3>
+          <p className="text-sm text-slate-600 mb-1">Статус: <span className="font-semibold">{statusText}</span></p>
+          <p className="text-sm text-slate-600 mb-4">Доступ до: <span className="font-semibold">{untilText}</span></p>
+          <button
+            type="button"
+            onClick={() => navigate('/billing')}
+            className="w-full py-3 rounded-xl bg-sky-500 text-white font-semibold hover:bg-sky-600 transition-colors"
+          >
+            {billingButtonText}
+          </button>
+        </section>
 
         {/* 
         <button
