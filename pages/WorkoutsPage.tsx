@@ -238,14 +238,14 @@ const WorkoutsPage: React.FC = () => {
             <div className="p-4 sm:p-6">
                 <header className="flex justify-between items-center mb-6">
                     <h1 className="text-3xl font-bold text-slate-900">Тренировки</h1>
-                    <button onClick={() => setIsAddModalOpen(true)} className="p-2 bg-sky-100 text-sky-600 rounded-lg hover:bg-sky-200 transition-colors" aria-label="Добавить тренировку">
+                    <button onClick={() => setIsAddModalOpen(true)} className="p-2 bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-200 transition-colors" aria-label="Добавить тренировку">
                         <Plus size={20} />
                     </button>
                 </header>
 
                 <div className="grid grid-cols-2 gap-4 mb-6">
                     <div className="bg-white p-4 rounded-2xl shadow-sm flex flex-col justify-center items-center text-center h-28">
-                        <HeartPulse className="w-7 h-7 text-sky-500 mb-2" />
+                        <HeartPulse className="w-7 h-7 text-orange-500 mb-2" />
                         <p className="text-xl font-bold text-slate-800">{totalMinutes} мин</p>
                         <p className="text-xs text-slate-500">Сегодня</p>
                     </div>
@@ -261,7 +261,7 @@ const WorkoutsPage: React.FC = () => {
                     <ProgressBar value={workoutsData.doneThisWeek} max={workoutsData.weeklyTarget} label={`${workoutsData.doneThisWeek} из ${workoutsData.weeklyTarget}`} />
                     <div className="flex justify-between items-center mt-3 text-sm text-slate-500">
                         <div className="flex items-center">
-                            <HeartPulse size={16} className="mr-1.5 text-sky-500" />
+                            <HeartPulse size={16} className="mr-1.5 text-orange-500" />
                             <span>{weeklyStats.totalMinutes} мин</span>
                         </div>
                         <div className="flex items-center">

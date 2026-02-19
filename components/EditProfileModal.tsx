@@ -69,35 +69,35 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose, on
             
             <div>
                 <label className="block text-sm font-medium mb-1 text-slate-600">Имя</label>
-                <input type="text" name="name" value={formData.name} onChange={handleChange} className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400" required />
+                <input type="text" name="name" value={formData.name} onChange={handleChange} className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400" required />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <label className="block text-sm font-medium mb-1 text-slate-600">Рост, см</label>
-                    <input type="number" name="height" value={formData.height} onChange={handleChange} className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400" required />
+                    <input type="number" name="height" value={formData.height} onChange={handleChange} className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400" required />
                 </div>
                  <div>
                     <label className="block text-sm font-medium mb-1 text-slate-600">Вес, кг</label>
-                    <input type="number" name="weight" value={formData.weight} step="0.1" onChange={handleChange} className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400" required />
+                    <input type="number" name="weight" value={formData.weight} step="0.1" onChange={handleChange} className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400" required />
                 </div>
             </div>
 
             <div>
                 <label className="block text-sm font-medium mb-1 text-slate-600">Возраст</label>
-                <input type="number" name="age" value={formData.age} onChange={handleChange} className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400" required />
+                <input type="number" name="age" value={formData.age} onChange={handleChange} className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400" required />
             </div>
             
             <div>
                 <label className="block text-sm font-medium mb-1 text-slate-600">Уровень активности</label>
-                <select name="activity_level" value={formData.activity_level} onChange={handleChange} className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400">
+                <select name="activity_level" value={formData.activity_level} onChange={handleChange} className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400">
                     {activityLevels.map(level => <option key={level} value={level}>{level}</option>)}
                 </select>
             </div>
             
             <div>
                 <label className="block text-sm font-medium mb-1 text-slate-600">Цель</label>
-                <select name="goal" value={formData.goal} onChange={handleChange} className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400">
+                <select name="goal" value={formData.goal} onChange={handleChange} className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400">
                     {goals.map(goal => <option key={goal} value={goal}>{goal}</option>)}
                 </select>
             </div>
@@ -106,7 +106,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose, on
                 <button type="button" onClick={onClose} className="font-semibold text-slate-600 hover:text-slate-800">
                   Отмена
                 </button>
-                <button type="submit" className="px-6 py-2.5 font-semibold rounded-lg bg-sky-500 text-white hover:bg-sky-600 shadow-sm transition-colors">
+                <button type="submit" className="px-6 py-2.5 font-semibold rounded-lg bg-orange-500 text-white hover:bg-orange-600 shadow-sm transition-colors">
                   Сохранить
                 </button>
             </div>

@@ -80,7 +80,7 @@ const AddWorkoutModal: React.FC<AddWorkoutModalProps> = ({ isOpen, onClose, onSa
                   value={type}
                   onChange={(e) => setType(e.target.value)}
                   placeholder="Например: Бег, Силовая"
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent"
+                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
                   required
                 />
             </div>
@@ -93,7 +93,7 @@ const AddWorkoutModal: React.FC<AddWorkoutModalProps> = ({ isOpen, onClose, onSa
                       value={minutes}
                       onChange={(e) => setMinutes(e.target.value)}
                       placeholder="30"
-                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent"
+                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
                       required
                     />
                 </div>
@@ -109,7 +109,7 @@ const AddWorkoutModal: React.FC<AddWorkoutModalProps> = ({ isOpen, onClose, onSa
                       value={kcal}
                       onChange={(e) => setKcal(e.target.value)}
                       placeholder="200"
-                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent"
+                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
                       required
                     />
                      {showTooltip && (
@@ -135,7 +135,7 @@ const AddWorkoutModal: React.FC<AddWorkoutModalProps> = ({ isOpen, onClose, onSa
                       type="date"
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
-                      className="w-full px-3 py-2.5 pr-10 border border-slate-300 rounded-lg bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent appearance-none"
+                      className="w-full px-3 py-2.5 pr-10 border border-slate-300 rounded-lg bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent appearance-none"
                       required
                     />
                     <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
@@ -150,7 +150,7 @@ const AddWorkoutModal: React.FC<AddWorkoutModalProps> = ({ isOpen, onClose, onSa
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Например: последние подходы были тяжелыми"
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent"
+                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
                   rows={2}
                 />
             </div>
@@ -159,7 +159,7 @@ const AddWorkoutModal: React.FC<AddWorkoutModalProps> = ({ isOpen, onClose, onSa
                 <button type="button" onClick={onClose} className="font-semibold text-slate-600 hover:text-slate-800">
                   Отмена
                 </button>
-                <button type="submit" className="px-6 py-2.5 font-semibold rounded-lg bg-sky-500 text-white hover:bg-sky-600 shadow-sm transition-colors">
+                <button type="submit" className="px-6 py-2.5 font-semibold rounded-lg bg-orange-500 text-white hover:bg-orange-600 shadow-sm transition-colors">
                   Сохранить
                 </button>
             </div>

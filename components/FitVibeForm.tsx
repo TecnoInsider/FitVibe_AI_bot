@@ -384,9 +384,9 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
                     isActive
-                      ? "bg-sky-500 text-white"
+                      ? "bg-orange-500 text-white"
                       : isCompleted
-                      ? "bg-sky-100 text-sky-600"
+                      ? "bg-orange-100 text-orange-600"
                       : "bg-slate-100 text-slate-400"
                   }`}
                 >
@@ -413,8 +413,8 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
       {currentStep === 1 && (
         <div className="form-card rounded-xl p-6 space-y-5 animate-fade-in">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-full bg-sky-100 flex items-center justify-center">
-              <User className="w-5 h-5 text-sky-500" />
+            <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+              <User className="w-5 h-5 text-orange-500" />
             </div>
             <div>
               <h3 className="font-semibold text-slate-900 text-lg">Личные данные</h3>
@@ -481,8 +481,8 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
       {currentStep === 2 && (
         <div className="form-card rounded-xl p-6 space-y-5 animate-fade-in">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-full bg-sky-100 flex items-center justify-center">
-              <Scale className="w-5 h-5 text-sky-500" />
+            <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+              <Scale className="w-5 h-5 text-orange-500" />
             </div>
             <div>
               <h3 className="font-semibold text-slate-900 text-lg">Параметры тела</h3>
@@ -569,7 +569,7 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
                   }
                   className={`h-12 rounded-xl border text-base font-semibold transition-colors ${
                     formValues.gender === "male"
-                      ? "bg-sky-500 border-sky-500 text-white"
+                      ? "bg-orange-500 border-orange-500 text-white"
                       : "bg-white border-slate-200 text-slate-700 hover:border-slate-300"
                   }`}
                 >
@@ -582,7 +582,7 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
                   }
                   className={`h-12 rounded-xl border text-base font-semibold transition-colors ${
                     formValues.gender === "female"
-                      ? "bg-sky-500 border-sky-500 text-white"
+                      ? "bg-orange-500 border-orange-500 text-white"
                       : "bg-white border-slate-200 text-slate-700 hover:border-slate-300"
                   }`}
                 >
@@ -600,8 +600,8 @@ const FitVibeForm = ({ onComplete }: FitVibeFormProps) => {
       {currentStep === 3 && (
         <div className="form-card rounded-xl p-6 space-y-5 animate-fade-in">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-full bg-sky-100 flex items-center justify-center">
-              <Target className="w-5 h-5 text-sky-500" />
+            <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+              <Target className="w-5 h-5 text-orange-500" />
             </div>
             <div>
               <h3 className="font-semibold text-slate-900 text-lg">Цель и активность</h3>

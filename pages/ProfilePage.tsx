@@ -11,7 +11,7 @@ import { formatDateTimeForUser, resolveTimezone } from '../lib/datetime';
 
 const ProfileInfoCard: React.FC<{ icon: React.ReactNode; value: string | number; label: string }> = ({ icon, value, label }) => (
     <div className="bg-white p-4 rounded-2xl shadow-sm text-center flex flex-col items-center justify-center h-36">
-        <div className="text-sky-500 mb-2">{icon}</div>
+        <div className="text-orange-500 mb-2">{icon}</div>
         <p className="text-base font-bold text-slate-800">{value}</p>
         <p className="text-xs text-slate-500">{label}</p>
     </div>
@@ -161,7 +161,7 @@ const ProfilePage: React.FC = () => {
             <h1 className="text-3xl font-bold text-slate-900">Ваши данные</h1>
             <button 
                 onClick={() => setIsEditModalOpen(true)}
-                className="p-2 bg-sky-100 text-sky-600 rounded-lg hover:bg-sky-200 transition-colors" 
+                className="p-2 bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-200 transition-colors" 
                 aria-label="Редактировать профиль"
             >
                 <Pencil size={20} />
@@ -185,7 +185,7 @@ const ProfilePage: React.FC = () => {
                 <button 
                     onClick={handleAvatarClick}
                     disabled={isUploadingAvatar}
-                    className="absolute bottom-0 right-0 w-8 h-8 bg-sky-500 text-white rounded-full flex items-center justify-center border-2 border-slate-50 hover:bg-sky-600 disabled:bg-slate-400"
+                    className="absolute bottom-0 right-0 w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center border-2 border-slate-50 hover:bg-orange-600 disabled:bg-slate-400"
                     aria-label="Сменить фото"
                 >
                     <Camera size={16} />
@@ -215,7 +215,7 @@ const ProfilePage: React.FC = () => {
           <button
             type="button"
             onClick={() => navigate(billingTarget)}
-            className="w-full py-3 rounded-xl bg-sky-500 text-white font-semibold hover:bg-sky-600 transition-colors"
+            className="w-full py-3 rounded-xl bg-orange-500 text-white font-semibold hover:bg-orange-600 transition-colors"
           >
             {billingButtonText}
           </button>
