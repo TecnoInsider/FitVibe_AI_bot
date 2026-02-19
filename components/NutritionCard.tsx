@@ -15,14 +15,14 @@ const NutritionCard: React.FC<NutritionCardProps> = ({ title, value, goal, unit,
   const percentage = goal > 0 ? Math.min((value / goal) * 100, 100) : 0;
   
   const baseClasses = "relative p-4 rounded-2xl shadow-sm text-left cursor-pointer transition-all duration-300 flex flex-col justify-between h-32";
-  const activeClasses = "bg-sky-500 text-white";
+  const activeClasses = "bg-orange-500 text-white";
   const inactiveClasses = "bg-white text-slate-800 hover:bg-slate-50";
   
   const activeTextClasses = {
-      title: "text-sky-100",
+      title: "text-orange-100",
       value: "text-white",
-      unit: "text-sky-200",
-      goal: "text-sky-200"
+      unit: "text-orange-200",
+      goal: "text-orange-200"
   };
   
   const inactiveTextClasses = {
@@ -40,7 +40,7 @@ const NutritionCard: React.FC<NutritionCardProps> = ({ title, value, goal, unit,
         className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
     >
       {isActive && (
-        <div className="absolute top-2.5 right-2.5 text-sky-200 transition-opacity">
+        <div className="absolute top-2.5 right-2.5 text-orange-200 transition-opacity">
             {isChartVisible ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
         </div>
       )}
@@ -51,9 +51,9 @@ const NutritionCard: React.FC<NutritionCardProps> = ({ title, value, goal, unit,
         </p>
       </div>
       <div>
-        <div className={`w-full rounded-full h-1.5 mb-1.5 ${isActive ? 'bg-sky-400/50' : 'bg-slate-200'}`}>
+        <div className={`w-full rounded-full h-1.5 mb-1.5 ${isActive ? 'bg-orange-400/50' : 'bg-slate-200'}`}>
           <div
-            className={`h-1.5 rounded-full transition-all duration-500 ${isActive ? 'bg-white' : 'bg-sky-500'}`}
+            className={`h-1.5 rounded-full transition-all duration-500 ${isActive ? 'bg-white' : 'bg-orange-500'}`}
             style={{ width: `${percentage}%` }}
           ></div>
         </div>

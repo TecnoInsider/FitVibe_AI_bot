@@ -33,7 +33,7 @@ const createSplinePath = (points: {x: number, y: number}[]) => {
   return pathParts.join(' ');
 };
 
-const LineChart: React.FC<LineChartProps> = ({ data, stroke = "#0ea5e9" }) => {
+const LineChart: React.FC<LineChartProps> = ({ data, stroke = "#f97316" }) => {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 

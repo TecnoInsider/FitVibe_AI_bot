@@ -8,8 +8,8 @@ interface NutritionEmptyStateProps {
 const NutritionEmptyState: React.FC<NutritionEmptyStateProps> = ({ onSetGoals }) => {
   return (
     <div className="flex flex-col items-center justify-center text-center pt-8 pb-12 px-4 bg-white rounded-2xl shadow-sm">
-      <div className="w-20 h-20 rounded-full bg-sky-100 flex items-center justify-center mb-6">
-        <UtensilsCrossed className="w-10 h-10 text-sky-500" />
+      <div className="w-20 h-20 rounded-full bg-orange-100 flex items-center justify-center mb-6">
+        <UtensilsCrossed className="w-10 h-10 text-orange-500" />
       </div>
       <h2 className="text-2xl font-bold text-slate-800 mb-2">Начните следить за питанием</h2>
       
@@ -24,7 +24,7 @@ const NutritionEmptyState: React.FC<NutritionEmptyStateProps> = ({ onSetGoals })
 
       <button
         onClick={onSetGoals}
-        className="px-8 py-3 rounded-xl font-semibold bg-sky-500 text-white hover:bg-sky-600 transition-colors shadow-lg"
+        className="px-8 py-3 rounded-xl font-semibold bg-orange-500 text-white hover:bg-orange-600 transition-colors shadow-lg"
       >
         Установить цели
       </button>

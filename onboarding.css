@@ -5,8 +5,8 @@ body {
 }
 
 .form-card {
-  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-  box-shadow: 0 4px 24px -4px rgba(14, 165, 233, 0.12);
+  background: linear-gradient(180deg, #ffffff 0%, #fff8f1 100%);
+  box-shadow: 0 4px 24px -4px rgba(249, 115, 22, 0.12);
 }
 
 .input-focus-ring {
@@ -14,15 +14,15 @@ body {
 }
 
 .input-focus-ring:focus {
-  box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.15);
+  box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.15);
 }
 
 .btn-primary-glow {
-  box-shadow: 0 8px 32px -8px rgba(14, 165, 233, 0.4);
+  box-shadow: 0 8px 32px -8px rgba(249, 115, 22, 0.4);
 }
 
 .btn-primary-glow:hover {
-  box-shadow: 0 12px 40px -8px rgba(14, 165, 233, 0.5);
+  box-shadow: 0 12px 40px -8px rgba(249, 115, 22, 0.5);
 }
 
 @keyframes fade-in {
