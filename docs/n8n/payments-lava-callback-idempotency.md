@@ -4,14 +4,13 @@
 
 Если один и тот же callback из Lava запускается повторно (replay/manual test), текущий workflow снова делает `SQL Activate Paid Access` и повторно продлевает доступ.
 
-## Простой и безопасный подход
+## Что внедрено по факту
 
-Делаем дедупликацию по `dedupe_key` (хэш сырого payload):
+Дедупликация по `dedupe_key` + запись в `public.lava_callback_events`:
 
-- одинаковый callback payload обрабатывается только 1 раз;
-- новые реальные оплаты проходят (payload другой -> другой key).
-
-Это проще, чем пытаться dedup только по `contract_id` (можно случайно заблокировать легитимные рекуррентные события).
+- первый раз событие проходит в обработку;
+- повтор того же payload уходит в `duplicate_callback`;
+- `access_until` повторно не продлевается.
 
 ## 1) SQL (выполнить один раз)
 
@@ -32,9 +31,9 @@ create index if not exists idx_lava_callback_events_created_at
   on public.lava_callback_events(created_at desc);
 ```
 
-## 2) Обновить node `Normalize Callback` (Code)
+## 2) Node `Normalize Callback` (Code)
 
-Заменить код на этот:
+Используется детерминированная сериализация + FNV-1a (двойной, 16 hex):
 
 ```javascript
 const raw = $json.body ?? $json;
@@ -47,7 +46,41 @@ function toObj(value) {
   return null;
 }
 
-const merchantData = toObj(raw.merchantData) || toObj(raw.metadata) || toObj(raw.meta) || {};
+// Детерминированная сериализация: одинаковый payload -> одинаковая строка
+function stableStringify(value) {
+  if (value === null) return 'null';
+  const t = typeof value;
+
+  if (t === 'number' || t === 'boolean') return JSON.stringify(value);
+  if (t === 'string') return JSON.stringify(value);
+
+  if (Array.isArray(value)) {
+    return `[${value.map(stableStringify).join(',')}]`;
+  }
+
+  if (t === 'object') {
+    const keys = Object.keys(value).sort();
+    return `{${keys.map((k) => `${JSON.stringify(k)}:${stableStringify(value[k])}`).join(',')}}`;
+  }
+
+  return JSON.stringify(String(value));
+}
+
+// FNV-1a 32-bit -> 8 hex
+function fnv1aHash32(str, seed = 0x811c9dc5) {
+  let hash = seed >>> 0;
+  for (let i = 0; i < str.length; i++) {
+    hash ^= str.charCodeAt(i);
+    hash = (hash * 0x01000193) >>> 0;
+  }
+  return ('0000000' + hash.toString(16)).slice(-8);
+}
+
+const merchantData =
+  toObj(raw.merchantData) ||
+  toObj(raw.metadata) ||
+  toObj(raw.meta) ||
+  {};
 
 const eventType = String(raw.eventType ?? '').toLowerCase();
 const status = String(raw.status ?? raw.paymentStatus ?? raw.event ?? raw.state ?? '').toLowerCase();
@@ -55,20 +88,24 @@ const status = String(raw.status ?? raw.paymentStatus ?? raw.event ?? raw.state 
 const isPaid =
   eventType === 'payment.success' ||
   eventType === 'subscription.recurring.payment.success' ||
-  ['paid','success','succeeded','completed','finished','subscription-active'].includes(status);
+  ['paid', 'success', 'succeeded', 'completed', 'finished', 'subscription-active'].includes(status);
 
 const internalId = String(merchantData.internal_id ?? raw.internal_id ?? '').trim() || null;
 const buyerEmail = String(raw.buyer?.email ?? merchantData.email ?? '').trim().toLowerCase() || null;
 const telegramId = Number(merchantData.telegram_id ?? merchantData.tg_id ?? raw.telegram_id ?? raw.tg_id ?? 0) || null;
 
 const planRaw = Number(merchantData.plan_months ?? raw.plan_months ?? 1);
-const planMonths = [1,3,6,12].includes(planRaw) ? planRaw : 1;
+const planMonths = [1, 3, 6, 12].includes(planRaw) ? planRaw : 1;
 
 const invoiceId = String(raw.id ?? raw.invoiceId ?? raw.invoice_id ?? '').trim() || null;
 const contractId = String(raw.contractId ?? raw.contract_id ?? '').trim() || null;
 
-// Дедуп-ключ: стабильная строка из полного payload
-const dedupeKey = JSON.stringify(raw);
+// 16-hex dedupe key (два FNV-1a с разными seed/salt)
+const payloadStable = stableStringify(raw);
+const base = `${eventType}::${status}::${payloadStable}`;
+const h1 = fnv1aHash32(base, 0x811c9dc5);
+const h2 = fnv1aHash32(`salt::${base}`, 0x9e3779b1);
+const dedupeKey = `${h1}${h2}`;
 
 return [{
   json: {
@@ -87,37 +124,43 @@ return [{
 }];
 ```
 
-## 3) Добавить новый node `SQL Idempotency Guard` (Postgres)
+## 3) Node `SQL Idempotency Guard` (Postgres)
 
-Поставить node сразу после ветки `IF Paid?` = `true`.
+Ставит событие в таблицу и возвращает `should_process` + `src.*` для следующих нод:
 
 ```sql
-with ins as (
+with src as (
+  select
+    nullif(nullif(lower(trim('{{$json.internal_id}}')), 'null'), '') as internal_id,
+    nullif(nullif(lower(trim('{{$json.buyer_email}}')), 'null'), '') as buyer_email,
+    case when nullif(nullif(lower(trim('{{$json.telegram_id}}')), 'null'), '') is not null
+      then nullif(nullif(lower(trim('{{$json.telegram_id}}')), 'null'), '')::bigint
+    end as telegram_id,
+    coalesce(nullif('{{$json.plan_months}}','')::int, 1) as plan_months,
+    nullif(nullif(lower(trim('{{$json.invoice_id}}')), 'null'), '') as invoice_id,
+    nullif(nullif(lower(trim('{{$json.contract_id}}')), 'null'), '') as contract_id,
+    '{{ ($json.event_type || "").replace(/'/g, "''") }}' as event_type,
+    '{{ ($json.status || "").replace(/'/g, "''") }}' as status,
+    '{{ ($json.dedupe_key || "").replace(/'/g, "''") }}' as dedupe_key,
+    '{{ JSON.stringify($json.raw_payload || {}).replace(/'/g, "''") }}'::jsonb as raw_payload
+),
+ins as (
   insert into public.lava_callback_events (
-    dedupe_key,
-    event_type,
-    status,
-    invoice_id,
-    contract_id,
-    telegram_id,
-    payload
+    dedupe_key, event_type, status, invoice_id, contract_id, telegram_id, payload
   )
-  values (
-    '{{ ($json.dedupe_key || "").replace(/'/g, "''") }}',
-    '{{ ($json.event_type || "").replace(/'/g, "''") }}',
-    '{{ ($json.status || "").replace(/'/g, "''") }}',
-    {{ $json.invoice_id ? "'" + $json.invoice_id.replace(/'/g, "''") + "'" : 'null' }},
-    {{ $json.contract_id ? "'" + $json.contract_id.replace(/'/g, "''") + "'" : 'null' }},
-    {{ Number($json.telegram_id || 0) > 0 ? Number($json.telegram_id) : 'null' }},
-    '{{ JSON.stringify($json.raw_payload || {}).replace(/'/g, "''") }}'::jsonb
-  )
+  select
+    dedupe_key, event_type, status, invoice_id, contract_id, telegram_id, raw_payload
+  from src
   on conflict (dedupe_key) do nothing
   returning 1
 )
-select exists(select 1 from ins) as should_process;
+select
+  exists(select 1 from ins) as should_process,
+  src.*
+from src;
 ```
 
-## 4) Добавить `IF Should Process?`
+## 4) Node `IF Should Process`
 
 Условие:
 
@@ -125,42 +168,37 @@ select exists(select 1 from ins) as should_process;
 
 Ветки:
 
-- `true` -> текущая цепочка `SQL Resolve User` -> `IF User Resolved?` -> ...
-- `false` -> новый `Respond Duplicate`.
+- `true` -> `SQL Resolve User` -> стандартная цепочка активации.
+- `false` -> `Respond Duplicate`.
 
-## 5) Добавить `Respond Duplicate` (Respond to Webhook)
+## 5) Node `Respond Duplicate` (Respond to Webhook)
 
 ```json
 { "ok": true, "ignored": true, "reason": "duplicate_callback" }
 ```
 
-## 6) Подключения (коротко)
+## 6) Подключения
 
-Было:
-
-- `IF Paid? (true)` -> `SQL Resolve User`
-
-Станет:
-
-- `IF Paid? (true)` -> `SQL Idempotency Guard` -> `IF Should Process?`
-- `IF Should Process? (true)` -> `SQL Resolve User`
-- `IF Should Process? (false)` -> `Respond Duplicate`
+- `IF Paid? (true)` -> `SQL Idempotency Guard` -> `IF Should Process`
+- `IF Should Process (true)` -> `SQL Resolve User`
+- `IF Should Process (false)` -> `Respond Duplicate`
+- `IF Paid? (false)` -> `Respond Ignored`
 
 ## 7) Проверка
 
-1. Отправить 1 и тот же payload дважды в `POST /webhook/payments/lava/callback`.
+1. Отправить один и тот же payload дважды в `POST /webhook/payments/lava/callback`.
 2. Проверить:
-   - 1-й запуск: `paid=true`, `access_until` продлен.
-   - 2-й запуск: ответ `duplicate_callback`, `access_until` без изменений.
-3. Проверить в БД:
+   - 1-й запуск: `should_process=true`, доступ продлен.
+   - 2-й запуск: `should_process=false`, ответ `duplicate_callback`, доступа не продляется.
+3. Проверить события:
 
 ```sql
-select dedupe_key, event_type, status, created_at
+select id, dedupe_key, event_type, status, invoice_id, contract_id, created_at
 from public.lava_callback_events
 order by id desc
-limit 5;
+limit 10;
 ```
 
 ## Важное замечание
 
-Не делайте дедуп только по `contract_id` или только по `tg_id` — это может зарубить реальные следующие списания по рекуррентной подписке.
+Не делайте дедуп только по `contract_id` или только по `tg_id` — это может блокировать реальные следующие списания по рекуррентной подписке.
