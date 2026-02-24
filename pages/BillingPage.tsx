@@ -32,6 +32,7 @@ const BillingPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, openLink } = useTelegram();
+  const supportUrl = 'https://t.me/FitVibe_Suppor_bot';
   const { showToast } = useAppContext();
 
   const [profile, setProfile] = React.useState<UserProfile | null>(null);
@@ -204,6 +205,11 @@ const BillingPage: React.FC = () => {
 
   const autoRenewEnabled = profile?.auto_renew !== false;
 
+  const handleSupportClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    openLink(supportUrl);
+  };
+
   return (
     <div className="p-3 pb-24 max-w-lg mx-auto">
       <header className="flex items-center gap-3 mb-4">
@@ -247,6 +253,16 @@ const BillingPage: React.FC = () => {
           )}
           <p className="text-sm text-slate-700 mb-3">
             Автопродление: <span className="font-semibold">{autoRenewEnabled ? 'включено' : 'отключено'}</span>
+          </p>
+          <p className="text-xs text-slate-600 mb-3">
+            Нужна помощь?{' '}
+            <a
+              href={supportUrl}
+              onClick={handleSupportClick}
+              className="font-semibold text-emerald-600 underline underline-offset-2 hover:text-emerald-700"
+            >
+              Служба поддержки
+            </a>
           </p>
 
           <button
@@ -410,6 +426,17 @@ const BillingPage: React.FC = () => {
           {pricingError && <p className="text-center text-xs text-red-500 mt-2">{pricingError}</p>}
           <p className="text-center text-xs text-slate-500 mt-2">
             На следующем шаге откроется безопасная страница оплаты.
+          </p>
+          <p className="text-center text-xs text-slate-500 mt-1">
+            Если возникли вопросы,{' '}
+            <a
+              href={supportUrl}
+              onClick={handleSupportClick}
+              className="font-semibold text-emerald-600 underline underline-offset-2 hover:text-emerald-700"
+            >
+              напишите в поддержку
+            </a>
+            .
           </p>
         </>
       )}
