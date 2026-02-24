@@ -258,7 +258,7 @@ const NutritionPage: React.FC = () => {
                 )}
             </div>
             
-            <button onClick={() => { setEditingLog(null); setIsAddMealModalOpen(true); }} className="fixed bottom-24 right-5 w-12 h-12 bg-orange-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-orange-600 transition-colors z-30" aria-label="Добавить прием пищи">
+            <button onClick={() => { setEditingLog(null); setIsAddMealModalOpen(true); }} className="fixed bottom-24 right-5 w-12 h-12 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-emerald-600 transition-colors z-30" aria-label="Добавить прием пищи">
                 <Plus size={28} />
             </button>
             

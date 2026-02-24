@@ -16,7 +16,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ value, max, label, height = '
     <div>
       <div className={`relative w-full rounded-full overflow-hidden ${height} bg-slate-200`}>
         <div
-          className="h-full rounded-full transition-all duration-500 bg-orange-500"
+          className="h-full rounded-full transition-all duration-500 bg-emerald-500"
           style={{ width: `${percentage}%` }}
         />
         {isLarge && label && (

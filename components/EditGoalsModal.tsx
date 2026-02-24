@@ -75,7 +75,7 @@ const EditGoalsModal: React.FC<EditGoalsModalProps> = ({ isOpen, onClose, onSave
                   value={goals[name as keyof NutritionStats]}
                   onChange={handleChange}
                   placeholder={placeholder}
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
+                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent"
                   required
                 />
             </div>
@@ -85,7 +85,7 @@ const EditGoalsModal: React.FC<EditGoalsModalProps> = ({ isOpen, onClose, onSave
             <button type="button" onClick={onClose} className="font-semibold text-slate-600 hover:text-slate-800">
               Отмена
             </button>
-            <button type="submit" className="px-6 py-2.5 font-semibold rounded-lg bg-orange-500 text-white hover:bg-orange-600 shadow-sm transition-colors">
+            <button type="submit" className="px-6 py-2.5 font-semibold rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm transition-colors">
               Сохранить
             </button>
           </div>

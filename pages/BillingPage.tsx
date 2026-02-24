@@ -319,7 +319,7 @@ const BillingPage: React.FC = () => {
                     disabled={!allowed || isPricingLoading}
                     className={`rounded-lg py-1.5 text-base font-semibold border min-h-[35px] ${
                       active
-                        ? 'bg-orange-500 text-white border-orange-500'
+                        ? 'bg-emerald-500 text-white border-emerald-500'
                         : 'bg-slate-50 text-slate-700 border-slate-200'
                     } disabled:opacity-40`}
                   >
@@ -338,7 +338,7 @@ const BillingPage: React.FC = () => {
                 disabled={!methodOptions.includes('ru') || isPricingLoading}
                 className={`rounded-lg py-1 px-2 text-base leading-tight font-semibold border min-h-[35px] ${
                   method === 'ru'
-                    ? 'bg-orange-500 text-white border-orange-500'
+                    ? 'bg-emerald-500 text-white border-emerald-500'
                     : 'bg-slate-50 text-slate-700 border-slate-200'
                 } disabled:opacity-40`}
               >
@@ -349,7 +349,7 @@ const BillingPage: React.FC = () => {
                 disabled={!methodOptions.includes('foreign') || isPricingLoading}
                 className={`rounded-lg py-1 px-2 text-base leading-tight font-semibold border min-h-[35px] ${
                   method === 'foreign'
-                    ? 'bg-orange-500 text-white border-orange-500'
+                    ? 'bg-emerald-500 text-white border-emerald-500'
                     : 'bg-slate-50 text-slate-700 border-slate-200'
                 } disabled:opacity-40`}
               >
@@ -367,7 +367,7 @@ const BillingPage: React.FC = () => {
                   disabled={!currencyOptions.includes('USD') || isPricingLoading}
                   className={`rounded-lg py-1 text-base font-semibold border min-h-[35px] ${
                     currency === 'USD'
-                      ? 'bg-orange-500 text-white border-orange-500'
+                      ? 'bg-emerald-500 text-white border-emerald-500'
                       : 'bg-slate-50 text-slate-700 border-slate-200'
                   } disabled:opacity-40`}
                 >
@@ -378,7 +378,7 @@ const BillingPage: React.FC = () => {
                   disabled={!currencyOptions.includes('EUR') || isPricingLoading}
                   className={`rounded-lg py-1 text-base font-semibold border min-h-[35px] ${
                     currency === 'EUR'
-                      ? 'bg-orange-500 text-white border-orange-500'
+                      ? 'bg-emerald-500 text-white border-emerald-500'
                       : 'bg-slate-50 text-slate-700 border-slate-200'
                   } disabled:opacity-40`}
                 >
@@ -392,7 +392,7 @@ const BillingPage: React.FC = () => {
             <div className="flex items-end justify-between gap-3">
               <p className="text-base text-slate-600">К оплате</p>
               <div className="text-right">
-                <p className="text-3xl font-bold text-orange-500">{formatPrice(amount, currency)}</p>
+                <p className="text-3xl font-bold text-emerald-500">{formatPrice(amount, currency)}</p>
                 <p className="text-xs text-slate-500">{formatPrice(monthly, currency)} / мес</p>
               </div>
             </div>
@@ -401,7 +401,7 @@ const BillingPage: React.FC = () => {
           <button
             type="button"
             onClick={handleCreatePayment}
-            className="w-full py-3 rounded-xl bg-orange-500 text-white text-base font-semibold flex items-center justify-center gap-2 hover:bg-orange-600 disabled:bg-slate-300"
+            className="w-full py-3 rounded-xl bg-emerald-500 text-white text-base font-semibold flex items-center justify-center gap-2 hover:bg-emerald-600 disabled:bg-slate-300"
             disabled={!profile?.email || !selectedPrice || isPricingLoading || isCreatingPayment}
           >
             <CreditCard size={18} />

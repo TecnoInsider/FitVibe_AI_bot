@@ -11,7 +11,7 @@ const navItems = [
 
 export function TabBar() {
   const baseClasses = "flex flex-col items-center justify-center w-full pt-2 text-xs font-medium transition-colors duration-200";
-  const activeClasses = "text-orange-500";
+  const activeClasses = "text-emerald-500";
   const inactiveClasses = "text-slate-400";
 
   return (

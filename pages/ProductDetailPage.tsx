@@ -70,7 +70,7 @@ const ProductDetailPage: React.FC = () => {
       <div className={`grid ${!item.ozon || !item.wb ? 'grid-cols-1' : 'grid-cols-2'} gap-4 mb-8`}>
             {item.ozon && (
               <div className="text-center">
-                  <button onClick={() => openLink(item.ozon!.url)} className="w-full py-2 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-md text-base">
+                  <button onClick={() => openLink(item.ozon!.url)} className="w-full py-2 rounded-xl font-bold text-white bg-emerald-500 hover:bg-emerald-600 transition-colors shadow-md text-base">
                       OZON
                   </button>
                   <p className="mt-2 text-xl font-bold text-slate-800">

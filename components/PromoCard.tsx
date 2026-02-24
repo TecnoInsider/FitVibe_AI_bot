@@ -18,7 +18,7 @@ const PromoCard: React.FC<PromoCardProps> = ({ promo, onCopy }) => {
       </div>
       <button 
         onClick={() => onCopy(promo.code)}
-        className="p-3 rounded-full text-orange-500 hover:bg-orange-50"
+        className="p-3 rounded-full text-emerald-500 hover:bg-emerald-50"
         aria-label="Копировать промокод"
       >
         <Copy size={24} />

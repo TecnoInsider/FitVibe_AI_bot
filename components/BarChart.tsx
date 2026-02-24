@@ -38,7 +38,7 @@ const BarChart: React.FC<BarChartProps> = ({ data }) => {
                     {Math.round(item.value)}
                 </div>
                 <div
-                    className="w-full bg-orange-400 rounded-t-md transition-all duration-300"
+                    className="w-full bg-emerald-400 rounded-t-md transition-all duration-300"
                     style={{ height: `${barHeight}%` }}
                 ></div>
             </div>

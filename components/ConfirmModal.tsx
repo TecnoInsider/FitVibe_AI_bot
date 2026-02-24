@@ -30,7 +30,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({ isOpen, onClose, onConfirm,
           </button>
           <button
             onClick={handleConfirm}
-            className="w-full px-6 py-2.5 font-semibold rounded-lg bg-orange-500 text-white hover:bg-orange-600 shadow-sm transition-colors"
+            className="w-full px-6 py-2.5 font-semibold rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm transition-colors"
           >
             ОК
           </button>
