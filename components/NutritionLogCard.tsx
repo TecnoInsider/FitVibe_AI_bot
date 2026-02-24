@@ -33,7 +33,7 @@ const NutritionLogCard: React.FC<NutritionLogCardProps> = ({ log, onEdit, onDele
         </div>
         
         <div className="flex items-center text-xs text-slate-500 space-x-4 flex-wrap gap-y-1">
-            <span className="font-semibold text-orange-600">К: <b className="font-bold">{log.kcal}</b></span>
+            <span className="font-semibold text-emerald-600">К: <b className="font-bold">{log.kcal}</b></span>
             <span>Б: <b className="font-bold text-slate-700">{log.protein}г</b></span>
             <span>У: <b className="font-bold text-slate-700">{log.carbs}г</b></span>
             <span>Ж: <b className="font-bold text-slate-700">{log.fat}г</b></span>
@@ -41,7 +41,7 @@ const NutritionLogCard: React.FC<NutritionLogCardProps> = ({ log, onEdit, onDele
       </div>
       
       <div className="flex flex-col pl-3 ml-3 border-l border-slate-200 space-y-2 shrink-0">
-        <button onClick={onEdit} className="p-2 text-slate-400 hover:text-orange-500 transition-colors">
+        <button onClick={onEdit} className="p-2 text-slate-400 hover:text-emerald-500 transition-colors">
           <Pencil size={18} />
         </button>
         <button onClick={onDelete} className="p-2 text-slate-400 hover:text-red-500 transition-colors">

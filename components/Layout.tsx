@@ -16,7 +16,7 @@ const Layout: React.FC<LayoutProps> = ({ title, children, canGoBack = false }) =
     <div className="p-4 sm:p-6">
       <header className="mb-6 flex items-center">
         {canGoBack && (
-          <button onClick={() => navigate(-1)} className="mr-2 p-2 -ml-2 rounded-full text-orange-500">
+          <button onClick={() => navigate(-1)} className="mr-2 p-2 -ml-2 rounded-full text-emerald-500">
             <ChevronLeft size={28} />
           </button>
         )}

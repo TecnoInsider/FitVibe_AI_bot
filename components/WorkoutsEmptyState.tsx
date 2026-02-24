@@ -9,8 +9,8 @@ interface WorkoutsEmptyStateProps {
 const WorkoutsEmptyState: React.FC<WorkoutsEmptyStateProps> = ({ onAddFirst }) => {
   return (
     <div className="flex flex-col items-center justify-center text-center py-16 px-4 bg-white rounded-2xl shadow-sm">
-      <div className="w-20 h-20 rounded-full bg-orange-100 flex items-center justify-center mb-6">
-        <Dumbbell className="w-10 h-10 text-orange-500" />
+      <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center mb-6">
+        <Dumbbell className="w-10 h-10 text-emerald-500" />
       </div>
       <h2 className="text-2xl font-bold text-slate-800 mb-2">Начните отслеживать прогресс</h2>
       <p className="text-slate-500 max-w-xs mb-8">
@@ -18,7 +18,7 @@ const WorkoutsEmptyState: React.FC<WorkoutsEmptyStateProps> = ({ onAddFirst }) =
       </p>
       <button
         onClick={onAddFirst}
-        className="px-8 py-3 rounded-xl font-semibold bg-orange-500 text-white hover:bg-orange-600 transition-colors shadow-lg"
+        className="px-8 py-3 rounded-xl font-semibold bg-emerald-500 text-white hover:bg-emerald-600 transition-colors shadow-lg"
       >
         Добавить первую тренировку
       </button>

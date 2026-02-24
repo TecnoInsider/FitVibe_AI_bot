@@ -22,7 +22,7 @@ const DefaultFallback: React.FC<{ error?: Error }> = ({ error }) => (
     )}
     <button
       onClick={() => window.location.reload()}
-      className="mt-4 px-4 py-2 rounded-lg bg-blue-600 text-white"
+      className="mt-4 px-4 py-2 rounded-lg bg-emerald-500 text-white"
     >
       Перезагрузить
     </button>

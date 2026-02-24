@@ -10,7 +10,7 @@ interface PriceBadgeProps {
 
 const platformStyles = {
   ozon: {
-    bgColor: 'bg-blue-600',
+    bgColor: 'bg-emerald-500',
     textColor: 'text-white',
     name: 'Ozon',
   },

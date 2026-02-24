@@ -33,7 +33,7 @@ const WorkoutCard: React.FC<WorkoutCardProps> = ({ workout, onEdit, onDelete, on
         </div>
       </div>
       <div className="flex flex-col pl-3 ml-3 border-l border-slate-200 space-y-2">
-        <button onClick={onEdit} className="p-2 text-slate-400 hover:text-orange-500 transition-colors">
+        <button onClick={onEdit} className="p-2 text-slate-400 hover:text-emerald-500 transition-colors">
           <Pencil size={18} />
         </button>
         <button onClick={onDelete} className="p-2 text-slate-400 hover:text-red-500 transition-colors">
