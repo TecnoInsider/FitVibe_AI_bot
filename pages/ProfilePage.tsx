@@ -41,7 +41,7 @@ const ProfilePage: React.FC = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-  const { user } = useTelegram();
+  const { user, openLink } = useTelegram();
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -154,6 +154,12 @@ const ProfilePage: React.FC = () => {
   const billingButtonText =
     accessStatus === 'paid' ? 'Управление подпиской' : 'Оформить доступ';
   const billingTarget = accessStatus === 'paid' ? '/billing?mode=manage' : '/billing';
+  const supportUrl = 'https://t.me/FitVibe_Suppor_bot';
+
+  const handleSupportClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    openLink(supportUrl);
+  };
 
   return (
     <div className="p-4">
@@ -212,6 +218,16 @@ const ProfilePage: React.FC = () => {
           <h3 className="text-lg font-bold text-slate-900 mb-1">Подписка</h3>
           <p className="text-sm text-slate-600 mb-1">Статус: <span className="font-semibold">{statusText}</span></p>
           <p className="text-sm text-slate-600 mb-4">{untilLabel}: <span className="font-semibold">{untilText}</span></p>
+          <p className="text-sm text-slate-600 mb-4">
+            Нужна помощь?{' '}
+            <a
+              href={supportUrl}
+              onClick={handleSupportClick}
+              className="font-semibold text-emerald-600 underline underline-offset-2 hover:text-emerald-700"
+            >
+              Служба поддержки
+            </a>
+          </p>
           <button
             type="button"
             onClick={() => navigate(billingTarget)}

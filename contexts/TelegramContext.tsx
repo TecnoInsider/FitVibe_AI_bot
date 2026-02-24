@@ -58,7 +58,11 @@ export const TelegramProvider: React.FC<{ children: ReactNode }> = ({ children }
     }), [telegramData.tg]);
 
     const openLink = useCallback((url: string) => {
-        telegramData.tg?.openLink?.(url, { try_instant_view: false });
+        if (telegramData.tg?.openLink) {
+            telegramData.tg.openLink(url, { try_instant_view: false });
+            return;
+        }
+        window.open(url, '_blank', 'noopener,noreferrer');
     }, [telegramData.tg]);
 
     const contextValue = useMemo(() => ({
