@@ -80,11 +80,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ item }) => {
           {badgeText}
         </div>
       </div>
-      <div className="mt-2 flex items-center justify-between gap-2">
+      <div className="mt-2">
         <p className="font-semibold text-base leading-5 text-slate-800 line-clamp-2">{item.title}</p>
-        <span className="shrink-0 inline-flex items-center rounded-full border border-emerald-600 bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white whitespace-nowrap shadow-sm">
-          Открыть
-        </span>
       </div>
       {item.subtitle && <p className="mt-1 text-sm text-slate-600 line-clamp-1">{item.subtitle}</p>}
     </div>
