@@ -1,10 +1,19 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { CatalogItem } from '../types';
 import Layout from '../components/Layout';
 import { useTelegram } from '../contexts/TelegramContext';
 import { getCatalog } from '../hooks/api';
+
+const toProxyImageUrl = (src: string): string => {
+  try {
+    const u = new URL(src);
+    return `https://images.weserv.nl/?url=${encodeURIComponent(u.host + u.pathname + u.search)}&w=1600&q=80&output=jpg`;
+  } catch {
+    return src;
+  }
+};
 
 const ProductDetailSkeleton: React.FC = () => (
     <div className="animate-pulse">
@@ -34,7 +43,16 @@ const ProductDetailPage: React.FC = () => {
   const [item, setItem] = useState<CatalogItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isNotFound, setIsNotFound] = useState(false);
+  const [detailImgSrc, setDetailImgSrc] = useState<string>('');
+  const [triedProxy, setTriedProxy] = useState(false);
   const { openLink } = useTelegram();
+  const fallbackImage = useMemo(
+    () =>
+      `data:image/svg+xml;utf8,${encodeURIComponent(
+        `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080"><rect width="1080" height="1080" fill="#e2e8f0"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#64748b" font-family="Arial, sans-serif" font-size="56">FitVibe</text></svg>`
+      )}`,
+    []
+  );
   
   useEffect(() => {
     const fetchItem = async () => {
@@ -54,6 +72,19 @@ const ProductDetailPage: React.FC = () => {
     };
     fetchItem();
   }, [id]);
+
+  useEffect(() => {
+    if (!item?.img) {
+      setDetailImgSrc(fallbackImage);
+      return;
+    }
+    const src =
+      item.img.includes('images.unsplash.com') && !item.img.includes('?')
+        ? `${item.img}?auto=format&fit=crop&w=1600&q=80`
+        : item.img;
+    setDetailImgSrc(src);
+    setTriedProxy(false);
+  }, [item?.img, fallbackImage]);
 
   if (isLoading) {
     return <Layout title="" canGoBack={true}><ProductDetailSkeleton /></Layout>;
@@ -75,7 +106,21 @@ const ProductDetailPage: React.FC = () => {
   return (
     <Layout title="" canGoBack={true}>
       <div className="w-full aspect-square bg-slate-100 rounded-2xl mb-6 shadow-md overflow-hidden">
-        <img src={item.img} alt={item.title} className="w-full h-full object-cover object-center" />
+        <img
+          src={detailImgSrc}
+          alt={item.title}
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          onError={() => {
+            if (!triedProxy && detailImgSrc !== fallbackImage) {
+              setTriedProxy(true);
+              setDetailImgSrc(toProxyImageUrl(detailImgSrc));
+              return;
+            }
+            setDetailImgSrc(fallbackImage);
+          }}
+          className="w-full h-full object-cover object-center"
+        />
       </div>
       
       <h1 className="text-3xl font-bold text-slate-900 mb-6 text-center">{item.title}</h1>

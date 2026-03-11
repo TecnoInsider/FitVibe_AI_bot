@@ -3,7 +3,11 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { CatalogItem } from '../types';
 import Layout from '../components/Layout';
 import ProductCard from '../components/ProductCard';
+import Chip from '../components/Chip';
 import { getCatalog } from '../hooks/api';
+
+const normalizeTag = (tag: string): string =>
+  tag.trim().toLowerCase().replace(/\s+/g, '_');
 
 const CatalogSkeleton: React.FC = () => (
     <div className="animate-pulse">
@@ -26,6 +30,7 @@ const CatalogSkeleton: React.FC = () => (
 const CatalogPage: React.FC = () => {
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTag, setActiveTag] = useState<string>('all');
 
   useEffect(() => {
     const fetchCatalog = async () => {
@@ -42,20 +47,47 @@ const CatalogPage: React.FC = () => {
     fetchCatalog();
   }, []);
 
-  const pinnedItems = useMemo(() => {
-    if (!items) return [];
-    return items
-      .filter((item) => item.zone === 'top_pinned')
-      .sort((a, b) => a.position - b.position)
-      .slice(0, 2);
+  const tags = useMemo(() => {
+    const tagMap = new Map<string, string>();
+    for (const item of items) {
+      for (const tag of item.tags || []) {
+        const label = String(tag).trim();
+        if (!label) continue;
+        const key = normalizeTag(label);
+        if (!tagMap.has(key)) tagMap.set(key, label);
+      }
+    }
+    return Array.from(tagMap.entries())
+      .map(([key, label]) => ({ key, label }))
+      .sort((a, b) => a.label.localeCompare(b.label, 'ru'));
   }, [items]);
 
-  const feedItems = useMemo(() => {
-    if (!items) return [];
+  const filteredItems = useMemo(() => {
+    if (activeTag === 'all') return items;
+    return items.filter((item) =>
+      (item.tags || []).map((x) => normalizeTag(String(x))).includes(activeTag)
+    );
+  }, [items, activeTag]);
+
+  const pinnedItems = useMemo(() => {
     return items
+      .filter(
+        (item) =>
+          item.zone === 'top_pinned' &&
+          (activeTag === 'all' ||
+            (item.tags || [])
+              .map((x) => normalizeTag(String(x)))
+              .includes(activeTag))
+      )
+      .sort((a, b) => a.position - b.position)
+      .slice(0, 2);
+  }, [items, activeTag]);
+
+  const feedItems = useMemo(() => {
+    return filteredItems
       .filter((item) => item.zone !== 'top_pinned')
       .sort((a, b) => a.position - b.position);
-  }, [items]);
+  }, [filteredItems]);
 
   if (isLoading) {
       return <Layout title="Каталог"><CatalogSkeleton /></Layout>
@@ -63,6 +95,27 @@ const CatalogPage: React.FC = () => {
 
   return (
     <Layout title="Каталог">
+      {tags.length > 0 && (
+        <section className="mb-4 -mx-4">
+          <div className="flex gap-2 overflow-x-auto px-4 pb-2">
+            <Chip
+              key="all"
+              label="Все"
+              isActive={activeTag === 'all'}
+              onClick={() => setActiveTag('all')}
+            />
+            {tags.map((tag) => (
+              <Chip
+                key={tag.key}
+                label={tag.label}
+                isActive={activeTag === tag.key}
+                onClick={() => setActiveTag(tag.key)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
       {pinnedItems.length > 0 && (
         <section className="mb-6">
           <h2 className="text-sm font-semibold text-slate-500 mb-3">Рекомендуем</h2>
