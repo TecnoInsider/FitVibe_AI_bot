@@ -91,7 +91,17 @@ export interface CatalogItem {
   title: string;
   img: string;
   category: string;
+  type: 'article' | 'offer';
+  zone: 'top_pinned' | 'feed';
+  position: number;
+  subtitle?: string | null;
   description: string;
+  targetUrl: string;
+  ctaText: string;
+  badge?: string | null;
+  isActive: boolean;
+  startsAt?: string | null;
+  endsAt?: string | null;
   ozon?: {
     price: number;
     url: string;
