@@ -3,7 +3,6 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { CatalogItem } from '../types';
 import Layout from '../components/Layout';
 import ProductCard from '../components/ProductCard';
-import Chip from '../components/Chip';
 import { getCatalog } from '../hooks/api';
 
 const CatalogSkeleton: React.FC = () => (
@@ -25,16 +24,15 @@ const CatalogSkeleton: React.FC = () => (
 );
 
 const CatalogPage: React.FC = () => {
-  const [items, setItems] = useState<CatalogItem[] | null>(null);
+  const [items, setItems] = useState<CatalogItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeCategory, setActiveCategory] = useState<string>('Все');
 
   useEffect(() => {
     const fetchCatalog = async () => {
         try {
             setIsLoading(true);
             const data = await getCatalog();
-            setItems(data);
+            setItems(data ?? []);
         } catch (error) {
             console.error("Failed to fetch catalog", error);
         } finally {
@@ -44,61 +42,51 @@ const CatalogPage: React.FC = () => {
     fetchCatalog();
   }, []);
 
-  const categories = useMemo(() => {
+  const pinnedItems = useMemo(() => {
     if (!items) return [];
-    const uniqueCategories = [...new Set(items.map(item => item.category))];
-    
-    // Сортируем категории, "Без категории" отправляем в конец
-    const sorted = uniqueCategories.sort((a, b) => {
-      if (a === 'Без категории') return 1;
-      if (b === 'Без категории') return -1;
-      return a.localeCompare(b);
-    });
-
-    return ['Все', ...sorted];
+    return items
+      .filter((item) => item.zone === 'top_pinned')
+      .sort((a, b) => a.position - b.position)
+      .slice(0, 2);
   }, [items]);
 
-  const filteredItems = useMemo(() => {
+  const feedItems = useMemo(() => {
     if (!items) return [];
-    if (activeCategory === 'Все') {
-      return items;
-    }
-    return items.filter(item => item.category === activeCategory);
-  }, [items, activeCategory]);
+    return items
+      .filter((item) => item.zone !== 'top_pinned')
+      .sort((a, b) => a.position - b.position);
+  }, [items]);
 
-  if (isLoading || !items) {
+  if (isLoading) {
       return <Layout title="Каталог"><CatalogSkeleton /></Layout>
   }
 
   return (
     <Layout title="Каталог">
-       <style>
-          {`
-              .no-scrollbar::-webkit-scrollbar { display: none; }
-              .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-          `}
-      </style>
-      <div className="mb-6 -mx-4">
-        <div className="flex space-x-3 overflow-x-auto px-4 pb-2 no-scrollbar">
-          {categories.map(category => (
-              <Chip
-                  key={category}
-                  label={category}
-                  isActive={activeCategory === category}
-                  onClick={() => setActiveCategory(category)}
-              />
-          ))}
-        </div>
-      </div>
-      
-      {filteredItems.length > 0 ? (
-        <div className="grid grid-cols-2 gap-4">
-          {filteredItems.map(item => (
-            <ProductCard key={item.id} item={item} />
-          ))}
-        </div>
+      {pinnedItems.length > 0 && (
+        <section className="mb-6">
+          <h2 className="text-sm font-semibold text-slate-500 mb-3">Рекомендуем</h2>
+          <div className="grid grid-cols-2 gap-4">
+            {pinnedItems.map(item => (
+              <ProductCard key={item.id} item={item} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {feedItems.length > 0 ? (
+        <section>
+          <h2 className="text-sm font-semibold text-slate-500 mb-3">Подборка</h2>
+          <div className="grid grid-cols-2 gap-4">
+            {feedItems.map(item => (
+              <ProductCard key={item.id} item={item} />
+            ))}
+          </div>
+        </section>
+      ) : pinnedItems.length > 0 ? (
+        <p className="text-center py-10" style={{color: 'var(--hint-color)'}}>Пока нет дополнительных карточек</p>
       ) : (
-          <p className="text-center py-10" style={{color: 'var(--hint-color)'}}>Нет товаров по выбранному фильтру</p>
+        <p className="text-center py-10" style={{color: 'var(--hint-color)'}}>Пока нет карточек для отображения</p>
       )}
     </Layout>
   );

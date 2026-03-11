@@ -33,6 +33,7 @@ const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [item, setItem] = useState<CatalogItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isNotFound, setIsNotFound] = useState(false);
   const { openLink } = useTelegram();
   
   useEffect(() => {
@@ -41,10 +42,12 @@ const ProductDetailPage: React.FC = () => {
         try {
             setIsLoading(true);
             const catalog = await getCatalog();
-            const foundItem = catalog?.find(p => p.id === id);
+            const foundItem = (catalog ?? []).find(p => p.id === id);
             setItem(foundItem || null);
+            setIsNotFound(!foundItem);
         } catch (error) {
             console.error("Failed to fetch product details", error);
+            setIsNotFound(true);
         } finally {
             setIsLoading(false);
         }
@@ -52,43 +55,48 @@ const ProductDetailPage: React.FC = () => {
     fetchItem();
   }, [id]);
 
-  if (isLoading || !item) {
+  if (isLoading) {
     return <Layout title="" canGoBack={true}><ProductDetailSkeleton /></Layout>;
+  }
+
+  if (!item || isNotFound) {
+    return (
+      <Layout title="" canGoBack={true}>
+        <div className="text-center py-12 text-slate-600">Карточка не найдена</div>
+      </Layout>
+    );
   }
 
   // Очищаем описание от лишних кавычек в начале и конце
   const cleanedDescription = item.description ? item.description.replace(/^"|"$/g, '').trim() : '';
+  const badgeText = item.badge || (item.type === 'article' ? 'Полезно' : 'Реклама');
+  const canOpen = Boolean(item.targetUrl);
 
   return (
     <Layout title="" canGoBack={true}>
       <div className="w-full aspect-square bg-slate-100 rounded-2xl mb-6 shadow-md overflow-hidden">
-        <img src={item.img} alt={item.title} className="w-full h-full object-contain" />
+        <img src={item.img} alt={item.title} className="w-full h-full object-cover object-center" />
       </div>
       
       <h1 className="text-3xl font-bold text-slate-900 mb-6 text-center">{item.title}</h1>
-      
-      <div className={`grid ${!item.ozon || !item.wb ? 'grid-cols-1' : 'grid-cols-2'} gap-4 mb-8`}>
-            {item.ozon && (
-              <div className="text-center">
-                  <button onClick={() => openLink(item.ozon!.url)} className="w-full py-2 rounded-xl font-bold text-white bg-emerald-500 hover:bg-emerald-600 transition-colors shadow-md text-base">
-                      OZON
-                  </button>
-                  <p className="mt-2 text-xl font-bold text-slate-800">
-                      {new Intl.NumberFormat('ru-RU').format(item.ozon.price)} ₽
-                  </p>
-              </div>
-            )}
-            {item.wb && (
-              <div className="text-center">
-                  <button onClick={() => openLink(item.wb!.url)} className="w-full py-2 rounded-xl font-bold text-white bg-violet-600 hover:bg-violet-700 transition-colors shadow-md text-base">
-                      WB
-                  </button>
-                  <p className="mt-2 text-xl font-bold text-slate-800">
-                      {new Intl.NumberFormat('ru-RU').format(item.wb.price)} ₽
-                  </p>
-              </div>
-            )}
-        </div>
+
+      {item.subtitle && <p className="text-center text-slate-500 mb-4">{item.subtitle}</p>}
+      <div className="flex items-center justify-center gap-2 mb-6">
+        <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{badgeText}</span>
+        <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
+          {item.type === 'article' ? 'Статья' : 'Оффер'}
+        </span>
+      </div>
+
+      <div className="mb-8">
+        <button
+          onClick={() => canOpen && openLink(item.targetUrl)}
+          disabled={!canOpen}
+          className="w-full py-3 rounded-xl font-bold text-white bg-emerald-500 hover:bg-emerald-600 transition-colors shadow-md text-base disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {item.ctaText || 'Подробнее'}
+        </button>
+      </div>
 
       <p className="text-slate-600 whitespace-pre-line">{cleanedDescription}</p>
     </Layout>

@@ -94,7 +94,98 @@ export const getCatalog = async (): Promise<CatalogItem[] | null> => {
     });
 
     if (data && Array.isArray(data)) {
-        return data as CatalogItem[];
+        const now = Date.now();
+        const toString = (v: unknown): string => String(v ?? '').trim();
+        const parseDate = (v: unknown): number | null => {
+            const s = toString(v);
+            if (!s) return null;
+            const ts = Date.parse(s);
+            return Number.isFinite(ts) ? ts : null;
+        };
+        const parseBool = (v: unknown): boolean => {
+            if (typeof v === 'boolean') return v;
+            const s = toString(v).toLowerCase();
+            return ['true', '1', 'yes', 'y', 'да'].includes(s);
+        };
+        const parseTags = (v: unknown): string[] => {
+            if (Array.isArray(v)) return v.map(String).map((x) => x.trim()).filter(Boolean);
+            const s = toString(v);
+            if (!s) return [];
+            return s.split('|').map((x) => x.trim()).filter(Boolean);
+        };
+
+        const normalized: CatalogItem[] = data
+            .map((raw: any): CatalogItem | null => {
+                // New promo_items format
+                if (raw && (raw.item_key || raw.target_url || raw.zone || raw.type)) {
+                    const startsAt = toString(raw.starts_at) || null;
+                    const endsAt = toString(raw.ends_at) || null;
+                    const startsTs = parseDate(startsAt);
+                    const endsTs = parseDate(endsAt);
+                    const isActive = raw.is_active === undefined ? true : parseBool(raw.is_active);
+                    if (!isActive) return null;
+                    if (startsTs !== null && startsTs > now) return null;
+                    if (endsTs !== null && endsTs < now) return null;
+
+                    const type = toString(raw.type) === 'article' ? 'article' : 'offer';
+                    const zone = toString(raw.zone) === 'top_pinned' ? 'top_pinned' : 'feed';
+                    const tags = parseTags(raw.tags);
+                    const category = tags[0] || (type === 'article' ? 'Статьи' : 'Офферы');
+
+                    return {
+                        id: toString(raw.item_key),
+                        title: toString(raw.title) || 'Без названия',
+                        subtitle: toString(raw.subtitle) || null,
+                        img: toString(raw.image_url),
+                        category,
+                        type,
+                        zone,
+                        position: Number(raw.position ?? 0) || 0,
+                        description: toString(raw.description),
+                        targetUrl: toString(raw.target_url),
+                        ctaText: toString(raw.cta_text) || (type === 'article' ? 'Читать' : 'Подробнее'),
+                        badge: toString(raw.badge) || null,
+                        isActive: true,
+                        startsAt,
+                        endsAt,
+                        tags,
+                    };
+                }
+
+                // Legacy format fallback
+                if (raw && (raw.id || raw.title || raw.img)) {
+                    const targetUrl = raw?.ozon?.url || raw?.wb?.url || '';
+                    return {
+                        id: toString(raw.id),
+                        title: toString(raw.title) || 'Без названия',
+                        subtitle: null,
+                        img: toString(raw.img),
+                        category: toString(raw.category) || 'Без категории',
+                        type: 'offer',
+                        zone: 'feed',
+                        position: 0,
+                        description: toString(raw.description),
+                        targetUrl,
+                        ctaText: 'Подробнее',
+                        badge: null,
+                        isActive: true,
+                        startsAt: null,
+                        endsAt: null,
+                        ozon: raw.ozon,
+                        wb: raw.wb,
+                        tags: Array.isArray(raw.tags) ? raw.tags : [],
+                    };
+                }
+
+                return null;
+            })
+            .filter((x: CatalogItem | null): x is CatalogItem => Boolean(x))
+            .sort((a, b) => {
+                if (a.zone !== b.zone) return a.zone === 'top_pinned' ? -1 : 1;
+                return a.position - b.position;
+            });
+
+        return normalized;
     }
     
     console.warn('getCatalog() did not receive an array. Returning null.', data);
